@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Alocamento - Linha CT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animação de pulso para o indicador "AO VIVO" */
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .live-indicator {
+            animation: pulse-red 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col p-4 md:p-8">
+
+    <header class="flex justify-between items-center mb-8 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+        <div class="flex items-center gap-6">
+            <svg viewBox="0 0 350 100" class="h-12 object-contain" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="346" height="56" fill="none" stroke="#ffffff" stroke-width="3"/>
+                <rect x="8" y="8" width="334" height="44" fill="#ffffff"/>
+                <text x="175" y="41" fill="#231f20" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="bold" text-anchor="middle" letter-spacing="3">RANDON</text>
+                <text x="5" y="94" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="900" letter-spacing="1">TRIEL-HT</text>
+                <polygon points="195,94 240,94 270,64 195,64" fill="#e30613"/>
+                <polygon points="250,94 270,94 300,64 280,64" fill="#ffffff"/>
+                <polygon points="280,94 345,94 345,64 310,64" fill="#a7a9ac"/>
+            </svg>
+            <div class="border-l border-slate-600 pl-6">
+                <h1 class="text-3xl font-black tracking-wide text-white">GESTÃO À VISTA</h1>
+                <p class="text-blue-400 font-bold uppercase tracking-widest text-sm">Linha Carrega Tudo (CT)</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <div class="text-right">
+                <p id="data-atual" class="text-2xl font-bold text-white"></p>
+                <p id="hora-atual" class="text-lg text-slate-400 font-mono"></p>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-950 px-4 py-2 rounded-full border border-slate-700">
+                <div class="w-3 h-3 bg-red-500 rounded-full live-indicator"></div>
+                <span class="text-red-500 font-bold tracking-widest text-sm">AO VIVO</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
+            <div>
+                <p class="text-slate-400 font-semibold uppercase text-sm mb-1">Efetivo (Ponto Soft)</p>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpi-pontosoft" class="text-5xl font-black text-blue-400">0</span>
+                    <span id="kpi-necessario" class="text-xl text-slate-500 font-bold">/ 0</span>
+                </div>
+            </div>
+            <svg width="48" height="48" class="text-slate-600 opacity-50" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+
+        <div id="card-absenteismo" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500">
+            <div>
+                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Absenteísmo</p>
+                <span id="kpi-absenteismo" class="text-5xl font-black">0</span>
+            </div>
+            <svg width="48" height="48" class="opacity-50" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+
+        <div id="card-manha" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500">
+            <div>
+                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Ronda Manhã (Faltantes)</p>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpi-manha-diff" class="text-5xl font-black">0</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-slate-400 uppercase">Na Linha</p>
+                <p id="kpi-manha-total" class="text-2xl font-bold text-slate-300">0</p>
+            </div>
+        </div>
+
+        <div id="card-tarde" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500">
+            <div>
+                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Ronda Tarde (Faltantes)</p>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpi-tarde-diff" class="text-5xl font-black">0</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-slate-400 uppercase">Na Linha</p>
+                <p id="kpi-tarde-total" class="text-2xl font-bold text-slate-300">0</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="flex-grow bg-slate-800 rounded-xl border border-slate-700 shadow-lg p-6 flex flex-col">
+        <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-3 flex items-center gap-2">
+            <svg width="24" height="24" class="text-blue-500" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            STATUS POR POSTO DE TRABALHO
+        </h2>
+        
+        <div id="grid-postos" class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-grow">
+            </div>
+    </div>
+
+    <footer class="mt-8 text-center pb-2">
+        <p class="text-xs font-semibold text-slate-500 tracking-wide uppercase">
+            Desenvolvido por Alexsandro B Tozzo - Analista de Produção
+        </p>
+    </footer>
+
+    <script>
+        // Relógio do Cabeçalho
+        setInterval(() => {
+            const agora = new Date();
+            document.getElementById('data-atual').innerText = agora.toLocaleDateString('pt-BR');
+            document.getElementById('hora-atual').innerText = agora.toLocaleTimeString('pt-BR');
+        }, 1000);
+
+        // Função Principal para Ler e Renderizar os Dados
+        function atualizarDashboard() {
+            try {
+                // Lê exatamente a mesma memória do arquivo index.html (v5)
+                const memEfetivo = localStorage.getItem('appCT_efetivo_v5');
+                const memPostos = localStorage.getItem('appCT_postos_v5');
+
+                if (!memEfetivo || !memPostos) return; // Se não houver dados, não faz nada
+
+                const dadosEfetivo = JSON.parse(memEfetivo);
+                const dadosPostos = JSON.parse(memPostos);
+
+                // --- 1. Atualizar KPIs Superiores ---
+                const pontoSoft = parseInt(dadosEfetivo.pontoSoft) || 0;
+                const necessario = parseInt(dadosEfetivo.necessario) || 0;
+                const absenteismo = Math.max(0, necessario - pontoSoft);
+
+                document.getElementById('kpi-pontosoft').innerText = pontoSoft;
+                document.getElementById('kpi-necessario').innerText = `/ ${necessario}`;
+                
+                const elAbsenteismo = document.getElementById('kpi-absenteismo');
+                const cardAbsenteismo = document.getElementById('card-absenteismo');
+                elAbsenteismo.innerText = absenteismo;
+                
+                // Muda a cor do Absenteísmo se houver
+                if (absenteismo > 0) {
+                    cardAbsenteismo.classList.add('bg-red-900/30', 'border-red-500/50', 'text-red-400');
+                    elAbsenteismo.classList.add('text-red-500');
+                } else {
+                    cardAbsenteismo.classList.remove('bg-red-900/30', 'border-red-500/50', 'text-red-400');
+                    elAbsenteismo.classList.remove('text-red-500');
+                    elAbsenteismo.classList.add('text-green-400');
+                }
+
+                // Cálculos de Rondas
+                let totalManha = 0;
+                let totalTarde = 0;
+                dadosPostos.forEach(p => {
+                    totalManha += parseInt(p.manha.pessoas) || 0;
+                    totalTarde += parseInt(p.tarde.pessoas) || 0;
+                });
+
+                const diffManha = pontoSoft - totalManha;
+                const diffTarde = pontoSoft - totalTarde;
+
+                // Atualiza Cards de Rondas
+                const renderizarCardRonda = (idTotal, idDiff, idCard, total, diff) => {
+                    document.getElementById(idTotal).innerText = total;
+                    const elDiff = document.getElementById(idDiff);
+                    const elCard = document.getElementById(idCard);
+                    
+                    if (total === 0) {
+                        elDiff.innerText = "-"; // Ronda ainda não iniciada
+                        elDiff.className = "text-5xl font-black text-slate-600";
+                        elCard.className = "bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500";
+                    } else if (diff === 0) {
+                        elDiff.innerText = "OK";
+                        elDiff.className = "text-5xl font-black text-green-400";
+                        elCard.className = "bg-green-900/20 p-6 rounded-xl border border-green-500/30 shadow-lg flex items-center justify-between transition-colors duration-500";
+                    } else if (diff > 0) {
+                        elDiff.innerText = diff; // Faltantes
+                        elDiff.className = "text-5xl font-black text-red-500";
+                        elCard.className = "bg-red-900/30 p-6 rounded-xl border border-red-500/50 shadow-lg flex items-center justify-between transition-colors duration-500";
+                    } else {
+                        elDiff.innerText = `+${Math.abs(diff)}`; // Sobrando
+                        elDiff.className = "text-5xl font-black text-yellow-400";
+                        elCard.className = "bg-yellow-900/20 p-6 rounded-xl border border-yellow-500/30 shadow-lg flex items-center justify-between transition-colors duration-500";
+                    }
+                };
+
+                renderizarCardRonda('kpi-manha-total', 'kpi-manha-diff', 'card-manha', totalManha, diffManha);
+                renderizarCardRonda('kpi-tarde-total', 'kpi-tarde-diff', 'card-tarde', totalTarde, diffTarde);
+
+
+                // --- 2. Atualizar Grid de Postos ---
+                const gridPostos = document.getElementById('grid-postos');
+                gridPostos.innerHTML = dadosPostos.map(posto => {
+                    
+                    const pManha = posto.manha.pessoas || '-';
+                    const ovManha = posto.manha.ov || 'AGUARDANDO';
+                    const pTarde = posto.tarde.pessoas || '-';
+                    const ovTarde = posto.tarde.ov || 'AGUARDANDO';
+
+                    return `
+                        <div class="bg-slate-900 rounded-lg border border-slate-700 p-4 flex flex-col justify-between">
+                            <h3 class="text-center font-bold text-slate-300 border-b border-slate-700 pb-2 mb-3 truncate" title="${posto.nome}">${posto.nome}</h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700/50">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] text-slate-500 uppercase font-bold">MANHÃ (Qtd)</span>
+                                        <span class="text-xl font-black ${pManha !== '-' ? 'text-blue-400' : 'text-slate-600'}">${pManha}</span>
+                                    </div>
+                                    <div class="flex flex-col text-right w-24">
+                                        <span class="text-[10px] text-slate-500 uppercase font-bold">OV</span>
+                                        <span class="text-sm font-mono font-bold truncate ${ovManha !== 'AGUARDANDO' ? 'text-slate-300' : 'text-slate-600'}">${ovManha}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700/50">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] text-slate-500 uppercase font-bold">TARDE (Qtd)</span>
+                                        <span class="text-xl font-black ${pTarde !== '-' ? 'text-orange-400' : 'text-slate-600'}">${pTarde}</span>
+                                    </div>
+                                    <div class="flex flex-col text-right w-24">
+                                        <span class="text-[10px] text-slate-500 uppercase font-bold">OV</span>
+                                        <span class="text-sm font-mono font-bold truncate ${ovTarde !== 'AGUARDANDO' ? 'text-slate-300' : 'text-slate-600'}">${ovTarde}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error("Erro ao atualizar dashboard:", e);
+            }
+        }
+
+        // --- GATILHO DE TEMPO REAL ---
+        // Toda vez que o arquivo index.html salvar dados no navegador, esta função é disparada automaticamente
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'appCT_efetivo_v5' || event.key === 'appCT_postos_v5') {
+                atualizarDashboard();
+            }
+        });
+
+        // Chamada inicial para carregar a tela quando abrir
+        atualizarDashboard();
+
+    </script>
+</body>
+</html>
+
+```
