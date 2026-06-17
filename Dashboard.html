@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Alocamento - Linha CT</title>
+    <title>Gestão à Vista - Linha CT</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
     <style>
-        /* Animação de pulso para o indicador "AO VIVO" */
         @keyframes pulse-red {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .live-indicator {
-            animation: pulse-red 2s infinite;
-        }
+        .live-indicator { animation: pulse-red 2s infinite; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col p-4 md:p-8">
@@ -35,7 +34,6 @@
                 <p class="text-blue-400 font-bold uppercase tracking-widest text-sm">Linha Carrega Tudo (CT)</p>
             </div>
         </div>
-
         <div class="flex items-center gap-6">
             <div class="text-right">
                 <p id="data-atual" class="text-2xl font-bold text-white"></p>
@@ -49,210 +47,147 @@
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
-            <div>
-                <p class="text-slate-400 font-semibold uppercase text-sm mb-1">Efetivo (Ponto Soft)</p>
-                <div class="flex items-baseline gap-2">
-                    <span id="kpi-pontosoft" class="text-5xl font-black text-blue-400">0</span>
-                    <span id="kpi-necessario" class="text-xl text-slate-500 font-bold">/ 0</span>
-                </div>
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <p class="text-slate-400 font-semibold uppercase text-sm mb-1">Efetivo (Ponto Soft)</p>
+            <div class="flex items-baseline gap-2">
+                <span id="kpi-pontosoft" class="text-5xl font-black text-blue-400">0</span>
+                <span id="kpi-necessario" class="text-xl text-slate-500 font-bold">/ 0</span>
             </div>
-            <svg width="48" height="48" class="text-slate-600 opacity-50" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         </div>
-
-        <div id="card-absenteismo" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500">
-            <div>
-                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Absenteísmo</p>
-                <span id="kpi-absenteismo" class="text-5xl font-black">0</span>
-            </div>
-            <svg width="48" height="48" class="opacity-50" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <div id="card-absenteismo" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg transition-colors">
+            <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Absenteísmo</p>
+            <span id="kpi-absenteismo" class="text-5xl font-black">0</span>
         </div>
-
-        <div id="card-manha" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500">
+        <div id="card-manha" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex justify-between items-center transition-colors">
             <div>
-                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Ronda Manhã (Faltantes)</p>
-                <div class="flex items-baseline gap-2">
-                    <span id="kpi-manha-diff" class="text-5xl font-black">0</span>
-                </div>
+                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Ronda Manhã (Desvios)</p>
+                <span id="kpi-manha-diff" class="text-5xl font-black">0</span>
             </div>
             <div class="text-right">
-                <p class="text-xs text-slate-400 uppercase">Na Linha</p>
+                <p class="text-xs text-slate-400 uppercase font-bold">Na Linha</p>
                 <p id="kpi-manha-total" class="text-2xl font-bold text-slate-300">0</p>
             </div>
         </div>
-
-        <div id="card-tarde" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500">
+        <div id="card-tarde" class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex justify-between items-center transition-colors">
             <div>
-                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Ronda Tarde (Faltantes)</p>
-                <div class="flex items-baseline gap-2">
-                    <span id="kpi-tarde-diff" class="text-5xl font-black">0</span>
-                </div>
+                <p class="text-slate-400 font-semibold uppercase text-sm mb-1 text-inherit">Ronda Tarde (Desvios)</p>
+                <span id="kpi-tarde-diff" class="text-5xl font-black">0</span>
             </div>
             <div class="text-right">
-                <p class="text-xs text-slate-400 uppercase">Na Linha</p>
+                <p class="text-xs text-slate-400 uppercase font-bold">Na Linha</p>
                 <p id="kpi-tarde-total" class="text-2xl font-bold text-slate-300">0</p>
             </div>
         </div>
-
     </div>
 
     <div class="flex-grow bg-slate-800 rounded-xl border border-slate-700 shadow-lg p-6 flex flex-col">
-        <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-3 flex items-center gap-2">
-            <svg width="24" height="24" class="text-blue-500" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            STATUS POR POSTO DE TRABALHO
-        </h2>
-        
-        <div id="grid-postos" class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-grow">
-            </div>
+        <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-3">STATUS POR POSTO DE TRABALHO</h2>
+        <div id="grid-postos" class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-grow"></div>
     </div>
 
     <footer class="mt-8 text-center pb-2">
         <p class="text-xs font-semibold text-slate-500 tracking-wide uppercase">
-            Desenvolvido por Alexsandro B Tozzo - Analista de Produção
+            Desenvolvido por Alexsandro B. Tozzo - Analista de Production
         </p>
     </footer>
 
     <script>
-        // Relógio do Cabeçalho
         setInterval(() => {
             const agora = new Date();
             document.getElementById('data-atual').innerText = agora.toLocaleDateString('pt-BR');
             document.getElementById('hora-atual').innerText = agora.toLocaleTimeString('pt-BR');
         }, 1000);
 
-        // Função Principal para Ler e Renderizar os Dados
-        function atualizarDashboard() {
-            try {
-                // Lê exatamente a mesma memória do arquivo index.html (v5)
-                const memEfetivo = localStorage.getItem('appCT_efetivo_v5');
-                const memPostos = localStorage.getItem('appCT_postos_v5');
+        // CONFIGURAÇÃO CORRIGIDA - URL DENTRO DO CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyADizntIBb7U7SRJbENZq6ybZ1NuS2ri8w",
+            authDomain: "gestaoalocamentolinhact.firebaseapp.com",
+            databaseURL: "https://gestaoalocamentolinhact-default-rtdb.firebaseio.com",
+            projectId: "gestaoalocamentolinhact",
+            storageBucket: "gestaoalocamentolinhact.firebasestorage.app",
+            messagingSenderId: "72994788023",
+            appId: "1:72994788023:web:954b5a023130b5f77ab332"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-                if (!memEfetivo || !memPostos) return; // Se não houver dados, não faz nada
+        database.ref('linhaCT/dados').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
 
-                const dadosEfetivo = JSON.parse(memEfetivo);
-                const dadosPostos = JSON.parse(memPostos);
+            const pts = parseInt(data.efetivo.pontoSoft) || 0;
+            const nec = parseInt(data.efetivo.necessario) || 0;
+            const abs = Math.max(0, nec - pts);
 
-                // --- 1. Atualizar KPIs Superiores ---
-                const pontoSoft = parseInt(dadosEfetivo.pontoSoft) || 0;
-                const necessario = parseInt(dadosEfetivo.necessario) || 0;
-                const absenteismo = Math.max(0, necessario - pontoSoft);
+            document.getElementById('kpi-pontosoft').innerText = pts;
+            document.getElementById('kpi-necessario').innerText = `/ ${nec}`;
+            document.getElementById('kpi-absenteismo').innerText = abs;
+            
+            const cardAbs = document.getElementById('card-absenteismo');
+            if(abs > 0) { cardAbs.className = "bg-red-950/40 p-6 rounded-xl border border-red-500/50 text-red-400"; }
+            else { cardAbs.className = "bg-slate-800 p-6 rounded-xl border border-slate-700 text-green-400"; }
 
-                document.getElementById('kpi-pontosoft').innerText = pontoSoft;
-                document.getElementById('kpi-necessario').innerText = `/ ${necessario}`;
-                
-                const elAbsenteismo = document.getElementById('kpi-absenteismo');
-                const cardAbsenteismo = document.getElementById('card-absenteismo');
-                elAbsenteismo.innerText = absenteismo;
-                
-                // Muda a cor do Absenteísmo se houver
-                if (absenteismo > 0) {
-                    cardAbsenteismo.classList.add('bg-red-900/30', 'border-red-500/50', 'text-red-400');
-                    elAbsenteismo.classList.add('text-red-500');
-                } else {
-                    cardAbsenteismo.classList.remove('bg-red-900/30', 'border-red-500/50', 'text-red-400');
-                    elAbsenteismo.classList.remove('text-red-500');
-                    elAbsenteismo.classList.add('text-green-400');
-                }
-
-                // Cálculos de Rondas
-                let totalManha = 0;
-                let totalTarde = 0;
-                dadosPostos.forEach(p => {
-                    totalManha += parseInt(p.manha.pessoas) || 0;
-                    totalTarde += parseInt(p.tarde.pessoas) || 0;
+            let tm = 0, tt = 0;
+            if (data.postos) {
+                data.postos.forEach(p => { 
+                    if (p && p.manha) tm += parseInt(p.manha.pessoas) || 0; 
+                    if (p && p.tarde) tt += parseInt(p.tarde.pessoas) || 0; 
                 });
+            }
 
-                const diffManha = pontoSoft - totalManha;
-                const diffTarde = pontoSoft - totalTarde;
+            const pintaCardRonda = (idTotal, idDiff, idCard, total) => {
+                const diff = pts - total;
+                document.getElementById(idTotal).innerText = total;
+                const elDiff = document.getElementById(idDiff);
+                const elCard = document.getElementById(idCard);
+                
+                if (total === 0) { elDiff.innerText = "-"; elDiff.className = "text-5xl font-black text-slate-600"; elCard.className = "bg-slate-800 p-6 rounded-xl border border-slate-700"; }
+                else if (diff === 0) { elDiff.innerText = "OK"; elDiff.className = "text-5xl font-black text-green-400"; elCard.className = "bg-green-950/20 p-6 rounded-xl border border-green-500/30"; }
+                else if (diff > 0) { elDiff.innerText = diff; elDiff.className = "text-5xl font-black text-red-500"; elCard.className = "bg-red-950/30 p-6 rounded-xl border border-red-500/50"; }
+                else { elDiff.innerText = `+${Math.abs(diff)}`; elDiff.className = "text-5xl font-black text-yellow-500"; elCard.className = "bg-yellow-950/20 p-6 rounded-xl border border-yellow-500/30"; }
+            };
 
-                // Atualiza Cards de Rondas
-                const renderizarCardRonda = (idTotal, idDiff, idCard, total, diff) => {
-                    document.getElementById(idTotal).innerText = total;
-                    const elDiff = document.getElementById(idDiff);
-                    const elCard = document.getElementById(idCard);
-                    
-                    if (total === 0) {
-                        elDiff.innerText = "-"; // Ronda ainda não iniciada
-                        elDiff.className = "text-5xl font-black text-slate-600";
-                        elCard.className = "bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between transition-colors duration-500";
-                    } else if (diff === 0) {
-                        elDiff.innerText = "OK";
-                        elDiff.className = "text-5xl font-black text-green-400";
-                        elCard.className = "bg-green-900/20 p-6 rounded-xl border border-green-500/30 shadow-lg flex items-center justify-between transition-colors duration-500";
-                    } else if (diff > 0) {
-                        elDiff.innerText = diff; // Faltantes
-                        elDiff.className = "text-5xl font-black text-red-500";
-                        elCard.className = "bg-red-900/30 p-6 rounded-xl border border-red-500/50 shadow-lg flex items-center justify-between transition-colors duration-500";
-                    } else {
-                        elDiff.innerText = `+${Math.abs(diff)}`; // Sobrando
-                        elDiff.className = "text-5xl font-black text-yellow-400";
-                        elCard.className = "bg-yellow-900/20 p-6 rounded-xl border border-yellow-500/30 shadow-lg flex items-center justify-between transition-colors duration-500";
-                    }
-                };
+            pintaCardRonda('kpi-manha-total', 'kpi-manha-diff', 'card-manha', tm);
+            pintaCardRonda('kpi-tarde-total', 'kpi-tarde-diff', 'card-tarde', tt);
 
-                renderizarCardRonda('kpi-manha-total', 'kpi-manha-diff', 'card-manha', totalManha, diffManha);
-                renderizarCardRonda('kpi-tarde-total', 'kpi-tarde-diff', 'card-tarde', totalTarde, diffTarde);
-
-
-                // --- 2. Atualizar Grid de Postos ---
-                const gridPostos = document.getElementById('grid-postos');
-                gridPostos.innerHTML = dadosPostos.map(posto => {
-                    
-                    const pManha = posto.manha.pessoas || '-';
-                    const ovManha = posto.manha.ov || 'AGUARDANDO';
-                    const pTarde = posto.tarde.pessoas || '-';
-                    const ovTarde = posto.tarde.ov || 'AGUARDANDO';
+            if (data.postos) {
+                document.getElementById('grid-postos').innerHTML = data.postos.map(p => {
+                    if (!p) return '';
+                    const pManha = (p.manha && p.manha.pessoas) ? p.manha.pessoas : '-';
+                    const ovManha = (p.manha && p.manha.ov) ? p.manha.ov : '---';
+                    const pTarde = (p.tarde && p.tarde.pessoas) ? p.tarde.pessoas : '-';
+                    const ovTarde = (p.tarde && p.tarde.ov) ? p.tarde.ov : '---';
 
                     return `
-                        <div class="bg-slate-900 rounded-lg border border-slate-700 p-4 flex flex-col justify-between">
-                            <h3 class="text-center font-bold text-slate-300 border-b border-slate-700 pb-2 mb-3 truncate" title="${posto.nome}">${posto.nome}</h3>
-                            
+                        <div class="bg-slate-900 rounded-lg border border-slate-700 p-4 flex flex-col justify-between shadow-inner">
+                            <h3 class="text-center font-bold text-slate-300 border-b border-slate-700 pb-2 mb-3 truncate">${p.nome || 'Posto'}</h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700/50">
                                     <div class="flex flex-col">
-                                        <span class="text-[10px] text-slate-500 uppercase font-bold">MANHÃ (Qtd)</span>
+                                        <span class="text-[10px] text-slate-500 font-bold uppercase">Manhã</span>
                                         <span class="text-xl font-black ${pManha !== '-' ? 'text-blue-400' : 'text-slate-600'}">${pManha}</span>
                                     </div>
                                     <div class="flex flex-col text-right w-24">
-                                        <span class="text-[10px] text-slate-500 uppercase font-bold">OV</span>
-                                        <span class="text-sm font-mono font-bold truncate ${ovManha !== 'AGUARDANDO' ? 'text-slate-300' : 'text-slate-600'}">${ovManha}</span>
+                                        <span class="text-[10px] text-slate-500 font-bold uppercase">OV</span>
+                                        <span class="text-xs font-mono font-bold truncate ${ovManha !== '---' ? 'text-slate-300' : 'text-slate-600'}">${ovManha}</span>
                                     </div>
                                 </div>
-
                                 <div class="flex justify-between items-center bg-slate-800 p-2 rounded border border-slate-700/50">
                                     <div class="flex flex-col">
-                                        <span class="text-[10px] text-slate-500 uppercase font-bold">TARDE (Qtd)</span>
+                                        <span class="text-[10px] text-slate-500 font-bold uppercase">Tarde</span>
                                         <span class="text-xl font-black ${pTarde !== '-' ? 'text-orange-400' : 'text-slate-600'}">${pTarde}</span>
                                     </div>
                                     <div class="flex flex-col text-right w-24">
-                                        <span class="text-[10px] text-slate-500 uppercase font-bold">OV</span>
-                                        <span class="text-sm font-mono font-bold truncate ${ovTarde !== 'AGUARDANDO' ? 'text-slate-300' : 'text-slate-600'}">${ovTarde}</span>
+                                        <span class="text-[10px] text-slate-500 font-bold uppercase">OV</span>
+                                        <span class="text-xs font-mono font-bold truncate ${ovTarde !== '---' ? 'text-slate-300' : 'text-slate-600'}">${ovTarde}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     `;
                 }).join('');
-
-            } catch (e) {
-                console.error("Erro ao atualizar dashboard:", e);
-            }
-        }
-
-        // --- GATILHO DE TEMPO REAL ---
-        // Toda vez que o arquivo index.html salvar dados no navegador, esta função é disparada automaticamente
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'appCT_efetivo_v5' || event.key === 'appCT_postos_v5') {
-                atualizarDashboard();
             }
         });
-
-        // Chamada inicial para carregar a tela quando abrir
-        atualizarDashboard();
-
     </script>
 </body>
 </html>
-
-```
