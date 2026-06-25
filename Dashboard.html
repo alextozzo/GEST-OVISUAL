@@ -23,11 +23,16 @@
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         
-        /* Esconde scrollbar mas mantém funcionalidade */
+        /* Esconde scrollbar mas mantém funcionalidade na página principal */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Scrollbar customizada mais fina para o Tooltip */
+        .tooltip-scroll::-webkit-scrollbar { width: 4px; }
+        .tooltip-scroll::-webkit-scrollbar-track { background: transparent; }
+        .tooltip-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden">
@@ -128,7 +133,7 @@
 
     <footer class="mt-6 text-center">
         <p class="text-xs font-bold text-slate-500 tracking-widest uppercase flex justify-center items-center gap-2">
-            <i class="fa-solid fa-code"></i> Desenvolvido por Alexsandro B. Tozzo - Analista de Production
+            <i class="fa-solid fa-code"></i> Desenvolvido por Alexsandro B. Tozzo - Analista de Produção
         </p>
     </footer>
 
@@ -139,6 +144,93 @@
             document.getElementById('data-atual').innerText = agora.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
             document.getElementById('hora-atual').innerText = agora.toLocaleTimeString('pt-BR', { hour12: false });
         }, 1000);
+
+        // Banco de Atividades extraído do Balanceamento CT
+        const getAtividadesPosto = (nomePosto) => {
+            const padraoNome = nomePosto.toLowerCase().trim();
+            
+            if (padraoNome.includes('posto 1') || padraoNome.includes('posto 01') || padraoNome.includes('box 1')) {
+                return [
+                    "Posicionar peças no gabarito",
+                    "Pontear almas",
+                    "Montar vigas",
+                    "Montar vigas rampa frontal",
+                    "Pontear manual vigas rampa frontal",
+                    "Montar vigas pescoço fixo",
+                    "Pontear manual vigas pescoço",
+                    "Avançar com ponte rolante"
+                ];
+            }
+            if (padraoNome.includes('posto 2') || padraoNome.includes('posto 02') || padraoNome.includes('box 2')) {
+                return [
+                    "Posicionar vigas",
+                    "Solda manual",
+                    "Preparar/posicionar tartaruga",
+                    "Solda com tartaruga",
+                    "Avançar com ponte rolante"
+                ];
+            }
+            if (padraoNome.includes('posto 3') || padraoNome.includes('posto 03') || padraoNome.includes('box 3')) {
+                return [
+                    "Posicionar vigas",
+                    "Dar fogo / Alinhar vigas sobre cavaletes",
+                    "Montar travessas passantes e reforços",
+                    "Montar saia traseira e perfil lateral",
+                    "Montar perfil lateral do rodado",
+                    "Montar suporte da suspensão/balanceiro",
+                    "Montar argola e suporte das argolas",
+                    "Montar reforços e cobertura do rebaixo",
+                    "Montar suporte dos alargadores e acessórios",
+                    "Avançar com ponte rolante"
+                ];
+            }
+            if (padraoNome.includes('posto 4') || padraoNome.includes('posto 04') || padraoNome.includes('box 4')) {
+                return [
+                    "Montar e soldar cobertura do rodado",
+                    "Montar suporte do bujão",
+                    "Soldar saia traseira (fechamento)",
+                    "Soldar estrutura interna e externa",
+                    "Soldar suporte das argolas e alargadores",
+                    "Soldar suporte da suspensão/balanceiro",
+                    "Avançar com ponte rolante"
+                ];
+            }
+            if (padraoNome.includes('posto 5') || padraoNome.includes('posto 05') || padraoNome.includes('box 5')) {
+                return [
+                    "Soldar estrutura e cobertura do rebaixo",
+                    "Finalizar solda cobertura do rodado",
+                    "Montar e soldar sup. parra barro",
+                    "Pré montar e soldar no produto C.I.",
+                    "Montar e soldar parachoque",
+                    "Conjunto articulação da rampa traseira",
+                    "Completar solda ganchos frontais Jota",
+                    "Avançar com ponte rolante"
+                ];
+            }
+            if (padraoNome.includes('posto 6') || padraoNome.includes('posto 06') || padraoNome.includes('box 6')) {
+                return [
+                    "Montar vigas e estrutura rampa frontal",
+                    "Soldar estrutura rampa frontal",
+                    "Montar e soldar engate do pescoço",
+                    "Montar e soldar agarradeiras da rampa",
+                    "Inspeção",
+                    "Avançar com ponte rolante"
+                ];
+            }
+            if (padraoNome.includes('posto 7') || padraoNome.includes('posto 07') || padraoNome.includes('box 7')) {
+                return [
+                    "Pré acoplamento e solda do pescoço móvel",
+                    "Montar braços de elevação",
+                    "Teste hidráulico",
+                    "Pré montar e fixar eixos com mola",
+                    "Montar pneus de processo",
+                    "Acoplar rampas traseira e dianteira",
+                    "Retirar produto"
+                ];
+            }
+            
+            return ["Atividades não cadastradas para este posto."];
+        };
 
         // Configuração Firebase
         const firebaseConfig = {
@@ -223,18 +315,49 @@
                     const pTarde = (p.tarde && p.tarde.pessoas) ? p.tarde.pessoas : '-';
                     const ovTarde = (p.tarde && p.tarde.ov) ? p.tarde.ov : '---';
 
-                    // Animação cascata (delay diferente para cada card)
+                    // Animação cascata
                     const animationDelay = `style="animation-delay: ${index * 50}ms"`;
+                    
+                    // Resgata atividades para este posto
+                    const atividadesDoPosto = getAtividadesPosto(p.nome || '');
+                    const htmlAtividades = atividadesDoPosto.map(ativ => `
+                        <li class="pl-2 border-l border-blue-500/50 py-1 hover:bg-slate-800/50 rounded-r transition-colors">
+                            <i class="fa-solid fa-angle-right text-[8px] text-blue-400 mr-1.5 align-middle"></i>
+                            <span class="align-middle">${ativ}</span>
+                        </li>
+                    `).join('');
 
+                    // Destaque: 'hover:z-50' no card principal garante que, ao passar o mouse, ele sobrepõe TODOS os outros cards
                     return `
-                        <div class="bg-slate-900 rounded-xl border border-slate-700 shadow-lg hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col justify-between overflow-hidden group animate-fade-in opacity-0" ${animationDelay}>
-                            <div class="bg-slate-800/80 p-3 border-b border-slate-700 relative">
-                                <div class="absolute left-0 top-0 h-full w-1 bg-blue-500 group-hover:bg-blue-400 transition-colors"></div>
-                                <h3 class="text-center font-bold text-slate-200 truncate pl-2 text-lg" title="${p.nome || 'Posto'}">${p.nome || 'Posto'}</h3>
+                        <div class="relative bg-slate-900 rounded-xl border border-slate-700 shadow-lg hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col justify-between group/card animate-fade-in opacity-0 hover:z-50" ${animationDelay}>
+                            
+                            <div class="bg-slate-800/80 p-3 border-b border-slate-700 relative flex justify-between items-center rounded-t-xl">
+                                <div class="absolute left-0 top-0 h-full w-1 bg-blue-500 group-hover/card:bg-blue-400 transition-colors rounded-tl-xl"></div>
+                                <h3 class="font-bold text-slate-200 truncate pl-2 text-lg w-4/5" title="${p.nome || 'Posto'}">${p.nome || 'Posto'}</h3>
+                                
+                                <div class="relative group/tooltip flex items-center justify-center">
+                                    <div class="p-1.5 hover:bg-slate-700 rounded-md cursor-help transition-colors">
+                                        <i class="fa-solid fa-clipboard-list text-slate-400 group-hover/tooltip:text-blue-400 text-lg transition-colors"></i>
+                                    </div>
+                                    
+                                    <div class="absolute z-[100] right-0 top-full pt-2 hidden group-hover/tooltip:block w-[280px]">
+                                        <div class="relative bg-slate-900 border border-slate-600 rounded-xl shadow-[0_15px_50px_-12px_rgba(0,0,0,1)] text-xs text-slate-300 p-4">
+                                            <div class="absolute -top-[7px] right-[11px] w-3 h-3 bg-slate-900 border-t border-l border-slate-600 rotate-45"></div>
+                                            
+                                            <h4 class="font-black text-blue-400 mb-3 border-b border-slate-700 pb-2 uppercase tracking-wider flex items-center gap-2">
+                                                <i class="fa-solid fa-gears"></i> Padrão de Trabalho
+                                            </h4>
+                                            
+                                            <ul class="space-y-1 max-h-56 overflow-y-auto pr-1 tooltip-scroll">
+                                                ${htmlAtividades}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <div class="p-3 space-y-3">
-                                <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 group-hover:bg-slate-800 transition-colors">
+                            <div class="p-3 space-y-3 rounded-b-xl">
+                                <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 group-hover/card:bg-slate-800 transition-colors">
                                     <div class="flex flex-col items-center w-1/3">
                                         <span class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1 flex items-center gap-1"><i class="fa-solid fa-sun text-yellow-500/70"></i> Manhã</span>
                                         <div class="bg-slate-900 px-3 py-1 rounded border border-slate-700 w-full text-center">
@@ -249,7 +372,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 group-hover:bg-slate-800 transition-colors">
+                                <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 group-hover/card:bg-slate-800 transition-colors">
                                     <div class="flex flex-col items-center w-1/3">
                                         <span class="text-[11px] text-orange-400 font-black uppercase tracking-wider mb-1">Tarde</span>
                                         <div class="bg-slate-900 px-3 py-1 rounded border border-slate-700 w-full text-center">
