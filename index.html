@@ -29,6 +29,19 @@
             </div>
         </header>
 
+        <section class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div class="flex flex-wrap items-center gap-4">
+                <span class="text-blue-800 font-bold">Registrar Oficialmente:</span>
+                <button onclick="registrarRonda('manha')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow transition-all">Salvar Ronda Manhã</button>
+                <button onclick="registrarRonda('tarde')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-bold shadow transition-all">Salvar Ronda Tarde</button>
+                
+                <div class="flex items-center gap-2 text-sm text-slate-600 ml-2">
+                    <input type="checkbox" id="check-limpar-auto" class="w-4 h-4 text-blue-600" checked>
+                    <label for="check-limpar-auto" class="font-medium cursor-pointer">Limpar após salvar</label>
+                </div>
+            </div>
+            <span id="status-registro" class="text-sm font-bold text-green-700 bg-green-100 px-4 py-2 rounded-lg opacity-0 transition-opacity">Registrado com sucesso!</span>
+        </section>
         <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-white p-5 rounded-xl shadow border border-slate-200 col-span-1 md:col-span-2 grid grid-cols-3 gap-4">
                 <div class="flex flex-col">
@@ -61,7 +74,7 @@
                 </h2>
                 <div class="flex items-center gap-3">
                     <span class="text-xs text-blue-700 font-semibold bg-blue-100 px-3 py-1.5 rounded-full">Nuvem Conectada</span>
-                    <span id="status-salvo" class="text-xs text-green-700 font-semibold bg-green-100 px-3 py-1.5 rounded-full transition-opacity duration-300 opacity-0">Sincronizado</span>
+                    <span id="status-salvo" class="text-xs text-green-700 font-semibold bg-green-100 px-3 py-1.5 rounded-full transition-opacity duration-300 opacity-0">Draft Salvo</span>
                 </div>
             </div>
 
@@ -169,7 +182,7 @@
         </section>
         
         <div class="flex flex-col sm:flex-row justify-end gap-4 mt-6">
-            <button onclick="limparTela()" class="px-6 py-3 rounded-lg font-bold text-slate-600 bg-white hover:bg-slate-100 transition-colors border-2 border-slate-200 flex items-center justify-center gap-2 shadow-sm">
+            <button onclick="limparTelaManualmente()" class="px-6 py-3 rounded-lg font-bold text-slate-600 bg-white hover:bg-slate-100 transition-colors border-2 border-slate-200 flex items-center justify-center gap-2 shadow-sm">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 Limpar Tela
             </button>
@@ -181,7 +194,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO CORRIGIDA - URL DENTRO DO CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyADizntIBb7U7SRJbENZq6ybZ1NuS2ri8w",
             authDomain: "gestaoalocamentolinhact.firebaseapp.com",
@@ -195,11 +207,13 @@
         const database = firebase.database();
 
         const nomesPostos = ["Posto 1", "Posto Pescoço", "Posto 2", "Posto 3", "Posto 4", "Posto 5", "Posto 6", "Posto 7"];
+        
+        // Pega a data local correta
         const dataHoje = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         document.getElementById('input-data').value = dataHoje;
 
-        // Recuperar dados iniciais ao abrir a página
-        database.ref('linhaCT/dados').once('value').then((snapshot) => {
+        // Recupera DRAFT ao invés da linha principal para não sobrepor tudo de uma vez
+        database.ref('linhaCT/draft').once('value').then((snapshot) => {
             const data = snapshot.val();
             if (data && data.efetivo) {
                 document.getElementById('input-data').value = data.efetivo.data || dataHoje;
@@ -220,6 +234,7 @@
             calcularTudo();
         });
 
+        // Modificado para salvar no caminho de 'draft' para auto-salvamento sem registrar a ronda final
         function salvarDados() {
             const efetivo = {
                 data: document.getElementById('input-data').value,
@@ -232,12 +247,12 @@
             for(let i=0; i<8; i++) {
                 postosArray.push({
                     nome: nomesPostos[i],
-                    manha: { personas: document.getElementById(`p${i}-m-p`).value, pessoas: document.getElementById(`p${i}-m-p`).value, ov: document.getElementById(`p${i}-m-o`).value },
-                    tarde: { personas: document.getElementById(`p${i}-t-p`).value, pessoas: document.getElementById(`p${i}-t-p`).value, ov: document.getElementById(`p${i}-t-o`).value }
+                    manha: { pessoas: document.getElementById(`p${i}-m-p`).value, ov: document.getElementById(`p${i}-m-o`).value },
+                    tarde: { pessoas: document.getElementById(`p${i}-t-p`).value, ov: document.getElementById(`p${i}-t-o`).value }
                 });
             }
 
-            database.ref('linhaCT/dados').set({ efetivo: efetivo, postos: postosArray }).then(() => {
+            database.ref('linhaCT/draft').set({ efetivo: efetivo, postos: postosArray }).then(() => {
                 const status = document.getElementById('status-salvo');
                 status.style.opacity = '1';
                 setTimeout(() => status.style.opacity = '0', 1000);
@@ -246,6 +261,55 @@
             calcularTudo();
         }
 
+        // Nova Função de Registrar Oficialmente por Turno e Data
+        function registrarRonda(turno) {
+            const data = document.getElementById('input-data').value;
+            const efetivo = {
+                necessario: parseInt(document.getElementById('input-necessario').value) || 0,
+                pontoSoft: parseInt(document.getElementById('input-pontosoft').value) || 0,
+                observacoes: document.getElementById('input-observacoes').value
+            };
+
+            const postosArray = [];
+            for(let i=0; i<8; i++) {
+                postosArray.push({
+                    nome: nomesPostos[i],
+                    manha: { pessoas: document.getElementById(`p${i}-m-p`).value, ov: document.getElementById(`p${i}-m-o`).value },
+                    tarde: { pessoas: document.getElementById(`p${i}-t-p`).value, ov: document.getElementById(`p${i}-t-o`).value }
+                });
+            }
+
+            const dadosCompletos = { efetivo: efetivo, postos: postosArray };
+            
+            // Grava no banco histórico: linhaCT/registros/2026-07-06/manha ou tarde
+            database.ref(`linhaCT/registros/${data}/${turno}`).set(dadosCompletos).then(() => {
+                const msg = document.getElementById('status-registro');
+                msg.innerText = `Ronda ${turno.toUpperCase()} registrada com sucesso!`;
+                msg.style.opacity = '1';
+                setTimeout(() => msg.style.opacity = '0', 3000);
+
+                if(document.getElementById('check-limpar-auto').checked) {
+                    limparCamposDaTabela();
+                }
+            });
+        }
+
+        function limparCamposDaTabela() {
+            document.getElementById('input-observacoes').value = '';
+            for(let i=0; i<8; i++) {
+                document.getElementById(`p${i}-m-p`).value = ''; document.getElementById(`p${i}-m-o`).value = '';
+                document.getElementById(`p${i}-t-p`).value = ''; document.getElementById(`p${i}-t-o`).value = '';
+            }
+            salvarDados(); // Zera o Draft na nuvem também
+        }
+
+        function limparTelaManualmente() {
+            if(confirm("Deseja apagar todos os dados não registrados da tela?")) {
+                limparCamposDaTabela();
+            }
+        }
+
+        // A SUA função original de calcularTudo, intacta com as cores (estilizar)
         function calcularTudo() {
             const nec = parseInt(document.getElementById('input-necessario').value) || 0;
             const pts = parseInt(document.getElementById('input-pontosoft').value) || 0;
@@ -273,17 +337,7 @@
             estilizar('rodape-tarde', tt);
         }
 
-        function limparTela() {
-            if(confirm("Deseja apagar tudo e zerar a nuvem?")) {
-                document.getElementById('input-observacoes').value = '';
-                for(let i=0; i<8; i++) {
-                    document.getElementById(`p${i}-m-p`).value = ''; document.getElementById(`p${i}-m-o`).value = '';
-                    document.getElementById(`p${i}-t-p`).value = ''; document.getElementById(`p${i}-t-o`).value = '';
-                }
-                salvarDados();
-            }
-        }
-
+        // A SUA função original de Exportar
         function exportarExcel() {
             const dt = document.getElementById('input-data').value;
             const nec = document.getElementById('input-necessario').value;
