@@ -43,6 +43,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden">
 
+    <!-- CABEÇALHO -->
     <header class="flex flex-col md:flex-row justify-between items-center mb-4 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600"></div>
         
@@ -88,6 +89,7 @@
         </div>
     </header>
 
+    <!-- FILTROS (HISTÓRICO E OV) -->
     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg mb-6 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
         <div class="flex items-center gap-3">
             <div class="bg-slate-700/50 p-2 rounded-lg flex items-center gap-3 border border-slate-600">
@@ -105,6 +107,7 @@
         </div>
     </div>
 
+    <!-- CARDS DE KPI (CABEÇALHO) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
             <div class="absolute -right-4 -top-4 opacity-5"><i class="fa-solid fa-users text-9xl"></i></div>
@@ -155,6 +158,7 @@
         </div>
     </div>
 
+    <!-- PAINEL DE POSTOS -->
     <div class="flex-grow bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl p-6 flex flex-col relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-slate-600"></div>
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 border-b border-slate-700 pb-4 gap-4">
@@ -164,7 +168,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-xs font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-3 py-1.5 rounded-lg shadow-sm">
-                    <i class="fa-solid fa-microchip mr-1"></i> Balanceamento Integrado
+                    <i class="fa-solid fa-microchip mr-1"></i> Balanceamento Oficial Integrado
                 </span>
                 <span class="text-xs font-bold text-slate-400 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
                     <i class="fa-solid fa-clock-rotate-left mr-1"></i> Lead Time Ativo
@@ -173,7 +177,8 @@
         </div>
         
         <div id="grid-postos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 flex-grow content-start">
-            </div>
+            <!-- Cards gerados via JS -->
+        </div>
     </div>
 
     <footer class="mt-6 text-center">
@@ -183,33 +188,32 @@
     </footer>
 
     <script>
-        // --- 1. DADOS DE ENGENHARIA (CRONOANÁLISE E BALANCEAMENTO OFICIAL) ---
-        // Baseado nas planilhas de 1 CT/Dia e 1,5 CT/Dia fornecidas
+        // --- 1. BANCO DE DADOS DA ENGENHARIA EXTRAÍDO DOS ARQUIVOS OFICIAIS ---
         const dadosEngenharia = {
             "1.0": {
-                efetivoNecessario: 34,
+                efetivoNecessario: 27,
                 postos: {
-                    "posto 1": { tempo: 451, limiteDias: 1, operadores: 2, tarefas: [{n: "Posicionar peças no gabarito", t: 46}, {n: "Montar almas", t: 36}, {n: "Montar vigas", t: 168}, {n: "Montar vigas rampa frontal", t: 121}] },
-                    "posto pescoço": { tempo: 451, limiteDias: 1, operadores: 2, tarefas: [{n: "Pontear manual vigas pescoço", t: 120}] },
-                    "posto 2": { tempo: 540, limiteDias: 1, operadores: 2, tarefas: [{n: "Posicionar vigas", t: 41}, {n: "Solda manual", t: 189}, {n: "Solda com tartaruga", t: 250}] },
-                    "posto 3": { tempo: 913, limiteDias: 2, operadores: 3, tarefas: [{n: "Posicionar vigas", t: 13}, {n: "Dar fogo / Alinhar", t: 32}, {n: "Montar perfil lateral", t: 80}, {n: "Montar sup suspensão", t: 118}] },
-                    "posto 4": { tempo: 1051, limiteDias: 2, operadores: 3, tarefas: [{n: "Montar cobertura do rodado", t: 216}, {n: "Soldar cobertura inferior", t: 66}] },
-                    "posto 5": { tempo: 1585, limiteDias: 3, operadores: 4, tarefas: [{n: "Soldar estrutura", t: 273}, {n: "Soldar cobertura rebaixo", t: 145}] },
-                    "posto 6": { tempo: 1460, limiteDias: 3, operadores: 3, tarefas: [{n: "Montar estrutura rampa frontal", t: 304}] },
-                    "posto 7": { tempo: 468, limiteDias: 1, operadores: 2, tarefas: [{n: "Pre acoplamento pescoço", t: 41}, {n: "Montar braços elevação", t: 74}, {n: "Retirar produto", t: 13}] }
+                    "posto 1": { tempo: 451.64, limiteDias: 1, tarefas: [{n: "POSICIONAR PEÇAS NO GABARITO", t: 46.44}, {n: "MONTAR ALMAS", t: 36.63}, {n: "MONTAR VIGAS", t: 168.27}, {n: "MONTAR VIGAS RAMPA FRONTAL #", t: 74.62}, {n: "SOLDAR MANUAL VIGAS RAMPA FRONTAL #", t: 102.43}, {n: "AVANÇAR COM PONTE ROLANTE", t: 23.25}] },
+                    "posto pescoço": { tempo: 451.64, limiteDias: 1, tarefas: [{n: "Ver tarefas do Posto 1", t: 0}] }, // Combinado ao tempo do posto 1 na fábrica
+                    "posto 2": { tempo: 540.30, limiteDias: 1, tarefas: [{n: "POSICIONAR VIGAS", t: 41.58}, {n: "SOLDA MANUAL", t: 189.88}, {n: "PREPARAR/POSICIONAR TARTARUGA", t: 62.74}, {n: "SOLDA COM TARTARUGA", t: 237.15}, {n: "AVANÇAR COM PONTE ROLANTE", t: 8.94}] },
+                    "posto 3": { tempo: 913.28, limiteDias: 2, tarefas: [{n: "POSICIONAR VIGAS", t: 13.78}, {n: "DAR FOGO", t: 32.73}, {n: "ALINHAR VIGAS SOBRE CAVALETES", t: 66.94}, {n: "MONTAR TRAVESSAS PASSANTES", t: 190.47}, {n: "MONTAR REFORÇOS", t: 80.25}, {n: "MONTAR SAIA TRASEIRA", t: 52.48}, {n: "MONTAR PERFIL LATERAL", t: 97.56}, {n: "MONTAR PERFIL LATERAL DO RODADO #", t: 80.75}, {n: "MONTAR SUPORTE DA SUSPENSÃO/BALANCEIRO", t: 118.94}, {n: "MONTAR ARGOLA E SUPORTE DAS ARGOLAS", t: 19.2}, {n: "MONTAR REFORÇOS DO REBAIXO", t: 37.71}, {n: "MONTAR COBERTURA DO REBAIXO (CH. COBERTURA EM GRAU) #", t: 34.92}, {n: "MONTAR SUPORTE DOS ALARGADORES", t: 52.83}, {n: "MONTAR SUPORTE ACESSSÓRIOS", t: 24.13}, {n: "AVANÇAR COM PONTE ROLANTE", t: 10.59}] },
+                    "posto 4": { tempo: 1051.96, limiteDias: 2, tarefas: [{n: "MONTAR COBERTURA DO RODADO", t: 216.22}, {n: "SOLDAR COBERTURA DO RODADO SOLDA INFERIOR", t: 66.24}, {n: "MONTAR SUPORTE DO BUJÃO", t: 19.86}, {n: "SOLDAR SAIA TRASEIRA", t: 50.41}, {n: "MONTAR E SOLDAR FECH. SAIA TRASEIRA", t: 75.93}, {n: "SOLDAR ESTRUTURA (INTERNA E EXTERNA)", t: 325.05}, {n: "SOLDAR SUPORTE DAS ARGOLAS", t: 30.39}, {n: "SOLDAR SUPORTE DOS ALARGADORES", t: 28.47}, {n: "SOLDAR SUPORTE DA SUSPENSÃO/BALANCEIRO", t: 214.3}, {n: "AVANÇAR COM PONTE ROLANTE", t: 25.08}] },
+                    "posto 5": { tempo: 1585.68, limiteDias: 3, tarefas: [{n: "SOLDAR ESTRUTURA", t: 273.96}, {n: "SOLDAR COBERTURA DO REBAIXO", t: 145.63}, {n: "SOLDAR COBERTURA DO RODADO (FINALIZAR)", t: 258.64}, {n: "MONTAR E SOLDAR SUP. PARRA BARRO", t: 30.9}, {n: "PRÉ MONTAR E SOLDAR NO PRODUTO CJ. GANCHOS FRONTAIS 'JOTA'", t: 692.64}, {n: "MONTAR E SOLDAR PARACHOQUE", t: 90.66}, {n: "COMPLETAR SOLDA DOS GANCHOS FRONTAIS 'JOTA'", t: 66.89}, {n: "AVANÇAR COM PONTE ROLANTE", t: 26.35}] },
+                    "posto 6": { tempo: 1460.43, limiteDias: 3, tarefas: [{n: "MONTAR VIGAS RAMPA FRONTAL", t: 121.0}, {n: "MONTAR ESTRUTURA DA RAMPA FRONTAL", t: 304.88}, {n: "SOLDAR ESTRUTRA RAMPA FRONTAL", t: 575.36}, {n: "MONTAR E SOLDAR ENGATE DO PESCOÇO", t: 31.72}, {n: "MONTAR E SOLDAR AGARRADEIRAS DA RAMPA FRONTAL", t: 191.42}, {n: "INSPEÇÃO", t: 207.0}, {n: "AVANÇAR COM PONTE ROLANTE", t: 29.05}] },
+                    "posto 7": { tempo: 468.53, limiteDias: 1, tarefas: [{n: "PRE ACOPLAMENTO DO PESCOÇO MÓVEL", t: 41.76}, {n: "MONTAR BRAÇOS DE ELEVAÇÃO", t: 74.06}, {n: "SOLDAR BUCHAS DO PESCOÇO MÓVEL", t: 53.72}, {n: "ACOPLAR PESCOÇO", t: 50.67}, {n: "TESTE HIDRÁULICO", t: 17.7}, {n: "PRE MONTAR MOLAS NO EIXO", t: 56.28}, {n: "FIXAR EIXOS COM MOLA NO PRODUTO", t: 154.53}, {n: "MONTAR PNEUS DE PROCESSO", t: 6.57}, {n: "RETIRAR PRODUTO", t: 13.24}] }
                 }
             },
             "1.5": {
-                efetivoNecessario: 42, 
+                efetivoNecessario: 41, 
                 postos: {
-                    "posto 1": { tempo: 274, limiteDias: 1, operadores: 2, tarefas: [{n: "Posicionar peças no gabarito", t: 46}, {n: "Montar almas", t: 36}] },
-                    "posto pescoço": { tempo: 274, limiteDias: 1, operadores: 2, tarefas: [{n: "Atividades do Pescoço (ajustado)", t: 274}] },
-                    "posto 2": { tempo: 540, limiteDias: 1, operadores: 3, tarefas: [{n: "Posicionar vigas", t: 41}, {n: "Solda manual", t: 189}] },
-                    "posto 3": { tempo: 880, limiteDias: 2, operadores: 4, tarefas: [{n: "Posicionar vigas", t: 13}, {n: "Alinhar vigas / Cavaletes", t: 66}] },
-                    "posto 4": { tempo: 1051, limiteDias: 2, operadores: 4, tarefas: [{n: "Montar cobertura do rodado", t: 216}] },
-                    "posto 5": { tempo: 1585, limiteDias: 3, operadores: 5, tarefas: [{n: "Soldar estrutura", t: 273}] },
-                    "posto 6": { tempo: 1460, limiteDias: 3, operadores: 4, tarefas: [{n: "Montar estrutura rampa", t: 304}] },
-                    "posto 7": { tempo: 468, limiteDias: 1, operadores: 3, tarefas: [{n: "Pre acoplamento", t: 41}, {n: "Retirar produto", t: 13}] }
+                    "posto 1": { tempo: 274.59, limiteDias: 1, tarefas: [{n: "POSICIONAR PEÇAS NO GABARITO", t: 46.44}, {n: "MONTAR ALMAS", t: 36.63}, {n: "MONTAR VIGAS", t: 168.27}, {n: "AVANÇAR COM PONTE ROLANTE", t: 23.25}] },
+                    "posto pescoço": { tempo: 274.59, limiteDias: 1, tarefas: [{n: "Ver tarefas do Posto 1", t: 0}] },
+                    "posto 2": { tempo: 540.30, limiteDias: 1, tarefas: [{n: "POSICIONAR VIGAS", t: 41.58}, {n: "SOLDA MANUAL", t: 189.88}, {n: "PREPARAR/POSICIONAR TARTARUGA", t: 62.74}, {n: "SOLDA COM TARTARUGA", t: 237.15}, {n: "AVANÇAR COM PONTE ROLANTE", t: 8.94}] },
+                    "posto 3": { tempo: 880.55, limiteDias: 2, tarefas: [{n: "POSICIONAR VIGAS", t: 13.78}, {n: "ALINHAR VIGAS SOBRE CAVALETES", t: 66.94}, {n: "MONTAR TRAVESSAS PASSANTES", t: 190.47}, {n: "MONTAR REFORÇOS", t: 80.25}, {n: "MONTAR SAIA TRASEIRA", t: 52.48}, {n: "MONTAR PERFIL LATERAL", t: 97.56}, {n: "MONTAR PERFIL LATERAL DO RODADO #", t: 80.75}, {n: "MONTAR SUPORTE DA SUSPENSÃO/BALANCEIRO", t: 118.94}, {n: "MONTAR ARGOLA E SUPORTE DAS ARGOLAS", t: 19.2}, {n: "MONTAR REFORÇOS DO REBAIXO", t: 37.71}, {n: "MONTAR COBERTURA DO REBAIXO (CH. COBERTURA EM GRAU) #", t: 34.92}, {n: "MONTAR SUPORTE DOS ALARGADORES", t: 52.83}, {n: "MONTAR SUPORTE ACESSSÓRIOS", t: 24.13}, {n: "AVANÇAR COM PONTE ROLANTE", t: 10.59}] },
+                    "posto 4": { tempo: 1051.96, limiteDias: 2, tarefas: [{n: "MONTAR COBERTURA DO RODADO", t: 216.22}, {n: "SOLDAR COBERTURA DO RODADO SOLDA INFERIOR", t: 66.24}, {n: "MONTAR SUPORTE DO BUJÃO", t: 19.86}, {n: "SOLDAR SAIA TRASEIRA", t: 50.41}, {n: "MONTAR E SOLDAR FECH. SAIA TRASEIRA", t: 75.93}, {n: "SOLDAR ESTRUTURA (INTERNA E EXTERNA)", t: 325.05}, {n: "SOLDAR SUPORTE DAS ARGOLAS", t: 30.39}, {n: "SOLDAR SUPORTE DOS ALARGADORES", t: 28.47}, {n: "SOLDAR SUPORTE DA SUSPENSÃO/BALANCEIRO", t: 214.3}, {n: "AVANÇAR COM PONTE ROLANTE", t: 25.08}] },
+                    "posto 5": { tempo: 1585.68, limiteDias: 3, tarefas: [{n: "SOLDAR ESTRUTURA", t: 273.96}, {n: "SOLDAR COBERTURA DO REBAIXO", t: 145.63}, {n: "SOLDAR COBERTURA DO RODADO (FINALIZAR INFEERIOR E EXTERIOR)", t: 258.64}, {n: "MONTAR E SOLDAR SUP. PARRA BARRO", t: 30.9}, {n: "PRÉ MONTAR E SOLDAR NO PRODUTO CJ. GANCHOS FRONTAIS 'JOTA'", t: 692.64}, {n: "MONTAR E SOLDAR PARACHOQUE", t: 90.66}, {n: "COMPLETAR SOLDA DOS GANCHOS FRONTAIS 'JOTA'", t: 66.89}, {n: "AVANÇAR COM PONTE ROLANTE", t: 26.35}] },
+                    "posto 6": { tempo: 1460.43, limiteDias: 3, tarefas: [{n: "MONTAR VIGAS RAMPA FRONTAL", t: 121.0}, {n: "MONTAR ESTRUTURA DA RAMPA FRONTAL", t: 304.88}, {n: "SOLDAR ESTRUTRA RAMPA FRONTAL", t: 575.36}, {n: "MONTAR E SOLDAR ENGATE DO PESCOÇO", t: 31.72}, {n: "MONTAR E SOLDAR AGARRADEIRAS DA RAMPA FRONTAL", t: 191.42}, {n: "INSPEÇÃO", t: 207.0}, {n: "AVANÇAR COM PONTE ROLANTE", t: 29.05}] },
+                    "posto 7": { tempo: 468.53, limiteDias: 1, tarefas: [{n: "PRE ACOPLAMENTO DO PESCOÇO MÓVEL", t: 41.76}, {n: "MONTAR BRAÇOS DE ELEVAÇÃO", t: 74.06}, {n: "SOLDAR BUCHAS DO PESCOÇO MÓVEL", t: 53.72}, {n: "ACOPLAR PESCOÇO", t: 50.67}, {n: "TESTE HIDRÁULICO", t: 17.7}, {n: "PRE MONTAR MOLAS NO EIXO", t: 56.28}, {n: "FIXAR EIXOS COM MOLA NO PRODUTO", t: 154.53}, {n: "MONTAR PNEUS DE PROCESSO", t: 6.57}, {n: "RETIRAR PRODUTO", t: 13.24}] }
                 }
             }
         };
@@ -260,10 +264,9 @@
         function getInfoPosto(nomePosto, ritmo) {
             const padrao = nomePosto.toLowerCase().trim();
             const config = dadosEngenharia[ritmo].postos;
-            // Busca chave parecida
             const chaveEncontrada = Object.keys(config).find(k => padrao.includes(k) || padrao.includes(k.replace('posto ', 'box ')));
             if(chaveEncontrada) return config[chaveEncontrada];
-            return { tempo: 0, limiteDias: 1, operadores: 0, tarefas: [{n: "Sem padrão mapeado", t: 0}] };
+            return { tempo: 0, limiteDias: 1, tarefas: [{n: "Sem padrão mapeado", t: 0}] };
         }
 
         function mesclarTurnosHistorico(dadosDia) {
@@ -416,7 +419,7 @@
             pintaCardRonda('kpi-manha-total', 'kpi-manha-diff', 'card-manha', tm);
             pintaCardRonda('kpi-tarde-total', 'kpi-tarde-diff', 'card-tarde', tt);
 
-            // GERAÇÃO DOS POSTOS COM DADOS DE ENGENHARIA E LEAD TIME CIRÚRGICO
+            // GERAÇÃO DOS POSTOS COM DADOS OFICIAIS DE ENGENHARIA E LEAD TIME
             if (dataView.postos) {
                 document.getElementById('grid-postos').innerHTML = dataView.postos.map((p, index) => {
                     if (!p) return '';
@@ -431,7 +434,7 @@
 
                     const diasNoPosto = calcularDiasNoPosto((ovTarde !== '---' ? ovTarde : ovManha), p.nome, dataSelecionada, dataView);
                     
-                    // Lógica Dinâmica de Cor do Crachá baseada no limite da engenharia
+                    // Lógica Dinâmica de Cor do Crachá
                     let badgeTempoHTML = '';
                     if (diasNoPosto > 0) {
                         let badgeColor = 'bg-emerald-700/80 text-white border-emerald-500'; // No Prazo Ideal
@@ -445,14 +448,14 @@
 
                     const animationDelay = `style="animation-delay: ${index * 50}ms"`;
                     
-                    // Monta as Tarefas com os Tempos Exatos
+                    // Monta as Tarefas com os Tempos Exatos (Extraídos da Planilha)
                     const htmlAtividades = infoEng.tarefas.map(ativ => `
                         <li class="pl-2 border-l border-blue-500/50 py-1.5 hover:bg-slate-800/80 rounded-r transition-colors flex justify-between items-center">
-                            <span class="align-middle text-slate-300">
+                            <span class="align-middle text-slate-300 text-[11px] leading-tight pr-2">
                                 <i class="fa-solid fa-angle-right text-[8px] text-blue-400 mr-1.5 align-middle"></i>
                                 ${ativ.n}
                             </span>
-                            ${ativ.t > 0 ? `<span class="text-[9px] font-mono font-bold bg-slate-950 text-blue-400 px-1.5 py-0.5 rounded border border-slate-700">${ativ.t}m</span>` : ''}
+                            ${ativ.t > 0 ? `<span class="text-[9px] font-mono font-bold bg-slate-950 text-blue-400 px-1.5 py-0.5 rounded border border-slate-700 flex-shrink-0">${ativ.t}m</span>` : ''}
                         </li>
                     `).join('');
 
@@ -473,18 +476,18 @@
                                     <div class="p-1.5 hover:bg-slate-700 rounded-md cursor-help transition-colors icon-destaque">
                                         <i class="fa-solid fa-clipboard-list text-slate-400 group-hover/tooltip:text-blue-400 text-lg transition-colors"></i>
                                     </div>
-                                    <div class="absolute z-[100] right-0 top-full pt-2 hidden group-hover/tooltip:block w-[320px]">
+                                    <div class="absolute z-[100] right-0 top-full pt-2 hidden group-hover/tooltip:block w-[340px]">
                                         <div class="relative bg-slate-900 border border-slate-600 rounded-xl shadow-[0_15px_50px_-12px_rgba(0,0,0,1)] text-xs text-slate-300 p-4">
                                             <div class="absolute -top-[7px] right-[11px] w-3 h-3 bg-slate-900 border-t border-l border-slate-600 rotate-45"></div>
                                             
                                             <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
                                                 <h4 class="font-black text-blue-400 uppercase tracking-wider flex items-center gap-2">
-                                                    <i class="fa-solid fa-gears"></i> Padrão de Trabalho
+                                                    <i class="fa-solid fa-gears"></i> Padrão Oficial
                                                 </h4>
-                                                <span class="bg-slate-800 text-white font-bold px-2 py-0.5 rounded text-[10px] border border-slate-600"><i class="fa-solid fa-user-gear"></i> ${infoEng.operadores} OPs</span>
+                                                <span class="bg-slate-800 text-white font-bold px-2 py-0.5 rounded text-[10px] border border-slate-600">Max: ${infoEng.limiteDias} ${infoEng.limiteDias === 1 ? 'Dia' : 'Dias'}</span>
                                             </div>
 
-                                            <ul class="space-y-1 max-h-56 overflow-y-auto pr-1 tooltip-scroll">${htmlAtividades}</ul>
+                                            <ul class="space-y-1 max-h-64 overflow-y-auto pr-1 tooltip-scroll">${htmlAtividades}</ul>
                                         </div>
                                     </div>
                                 </div>
