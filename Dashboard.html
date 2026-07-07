@@ -16,31 +16,37 @@
         }
         .live-indicator { animation: pulse-red 2s infinite; }
         
-        /* Animação suave de entrada para os cards */
+        @keyframes pulse-blue {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); color: #60a5fa; }
+            100% { transform: scale(1); }
+        }
+        .icon-destaque { animation: pulse-blue 2.5s infinite; }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         
-        /* Esconde scrollbar mas mantém funcionalidade na página principal */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-        /* Scrollbar customizada mais fina para o Tooltip */
         .tooltip-scroll::-webkit-scrollbar { width: 4px; }
         .tooltip-scroll::-webkit-scrollbar-track { background: transparent; }
         .tooltip-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+
+        .posto-desfocado { opacity: 0.2; filter: grayscale(100%); transform: scale(0.98); }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col p-4 md:p-6 overflow-x-hidden">
 
-    <header class="flex flex-col md:flex-row justify-between items-center mb-6 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden">
+    <header class="flex flex-col md:flex-row justify-between items-center mb-4 bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600"></div>
         
-        <div class="flex items-center gap-6 mb-4 md:mb-0">
+        <div class="flex flex-col md:flex-row items-center gap-6 mb-4 md:mb-0 w-full md:w-auto">
             <svg viewBox="0 0 350 100" class="h-14 object-contain drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
                 <rect x="2" y="2" width="346" height="56" fill="none" stroke="#ffffff" stroke-width="3"/>
                 <rect x="8" y="8" width="334" height="44" fill="#ffffff"/>
@@ -50,46 +56,75 @@
                 <polygon points="250,94 270,94 300,64 280,64" fill="#ffffff"/>
                 <polygon points="280,94 345,94 345,64 310,64" fill="#a7a9ac"/>
             </svg>
-            <div class="border-l-2 border-slate-600 pl-6">
-                <h1 class="text-3xl font-black tracking-wide text-white drop-shadow-md">GESTÃO À VISTA</h1>
-                <p class="text-blue-400 font-bold uppercase tracking-widest text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-truck-fast"></i> Linha Carrega Tudo (CT)
-                </p>
+            <div class="border-l-2 border-slate-600 pl-6 flex-grow flex justify-between items-center w-full md:w-auto">
+                <div>
+                    <h1 class="text-3xl font-black tracking-wide text-white drop-shadow-md">GESTÃO À VISTA</h1>
+                    <p class="text-blue-400 font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-truck-fast"></i> Linha Carrega Tudo (CT)
+                    </p>
+                </div>
             </div>
         </div>
         
         <div class="flex items-center gap-6">
+            <div class="bg-slate-900 border border-slate-600 rounded-xl p-2 flex flex-col items-center shadow-inner">
+                <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Ritmo de Produção</span>
+                <select id="ritmo-takt" class="bg-transparent text-blue-400 font-black text-lg outline-none cursor-pointer text-center" onchange="renderizarPainel()">
+                    <option value="1.0" class="bg-slate-800 text-white">1.0 CT / Dia</option>
+                    <option value="1.5" class="bg-slate-800 text-white">1.5 CT / Dia</option>
+                </select>
+            </div>
+
             <div class="text-right bg-slate-900/50 p-3 rounded-xl border border-slate-700">
                 <p id="data-atual" class="text-xl font-bold text-white"></p>
                 <p id="hora-atual" class="text-2xl text-blue-400 font-mono font-black drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]"></p>
             </div>
             <div class="flex flex-col items-center gap-2">
-                <div class="flex items-center gap-2 bg-red-950/40 px-5 py-2.5 rounded-full border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                    <div class="w-3.5 h-3.5 bg-red-500 rounded-full live-indicator"></div>
-                    <span class="text-red-500 font-bold tracking-widest text-sm">AO VIVO</span>
+                <div id="indicador-status" class="flex items-center gap-2 bg-slate-800 px-5 py-2.5 rounded-full border border-slate-600 shadow-md transition-colors">
+                    <div id="indicador-led" class="w-3.5 h-3.5 bg-slate-500 rounded-full"></div>
+                    <span id="indicador-texto" class="text-slate-400 font-bold tracking-widest text-sm">CARREGANDO...</span>
                 </div>
             </div>
         </div>
     </header>
 
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg mb-6 flex flex-col md:flex-row gap-4 justify-between items-center z-10 relative">
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-700/50 p-2 rounded-lg flex items-center gap-3 border border-slate-600">
+                <i class="fa-solid fa-calendar-days text-blue-400 pl-2"></i>
+                <input type="date" id="filtro-data" class="bg-transparent border-none text-white font-bold outline-none cursor-pointer" onchange="renderizarPainel()">
+            </div>
+            <button onclick="voltarParaHoje()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-colors text-sm">
+                Ir para Hoje
+            </button>
+        </div>
+
+        <div class="relative w-full md:w-1/3">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="filtro-ov" placeholder="Rastrear OV específica (Opcional)..." class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg pl-10 pr-4 py-2 font-mono uppercase focus:ring-2 focus:ring-blue-500 outline-none transition-all" onkeyup="aplicarFiltroOV()">
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group">
-            <div class="flex justify-between items-start mb-2">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-5"><i class="fa-solid fa-users text-9xl"></i></div>
+            <div class="flex justify-between items-start mb-2 relative z-10">
                 <p class="text-slate-400 font-semibold uppercase text-xs tracking-wider">Efetivo (Ponto Soft)</p>
                 <i class="fa-solid fa-users text-slate-600 group-hover:text-blue-400 transition-colors text-xl"></i>
             </div>
-            <div class="flex items-baseline gap-2 mt-2">
+            <div class="flex items-baseline gap-2 mt-2 relative z-10">
                 <span id="kpi-pontosoft" class="text-5xl font-black text-blue-400 drop-shadow-md">0</span>
-                <span id="kpi-necessario" class="text-xl text-slate-500 font-bold">/ 0</span>
+                <span id="kpi-necessario" class="text-xl text-slate-500 font-bold" title="Necessário baseado no Takt Time atual">/ 0</span>
             </div>
         </div>
         
-        <div id="card-absenteismo" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group">
-            <div class="flex justify-between items-start mb-2">
+        <div id="card-absenteismo" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-5"><i class="fa-solid fa-user-minus text-9xl"></i></div>
+            <div class="flex justify-between items-start mb-2 relative z-10">
                 <p class="font-semibold uppercase text-xs tracking-wider opacity-80">Absenteísmo</p>
                 <i class="fa-solid fa-user-minus opacity-50 text-xl"></i>
             </div>
-            <span id="kpi-absenteismo" class="text-5xl font-black mt-2 block drop-shadow-md">0</span>
+            <span id="kpi-absenteismo" class="text-5xl font-black mt-2 block drop-shadow-md relative z-10">0</span>
         </div>
 
         <div id="card-manha" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex justify-between items-center hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
@@ -100,9 +135,9 @@
                 </div>
                 <span id="kpi-manha-diff" class="text-5xl font-black drop-shadow-md">0</span>
             </div>
-            <div class="text-right bg-black/20 p-3 rounded-lg backdrop-blur-sm">
-                <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Na Linha</p>
-                <p id="kpi-manha-total" class="text-3xl font-black mt-1">0</p>
+            <div class="text-right bg-black/20 p-3 rounded-lg backdrop-blur-sm border border-white/5 shadow-inner">
+                <p class="text-[10px] opacity-70 uppercase font-black tracking-widest text-slate-300">Na Linha</p>
+                <p id="kpi-manha-total" class="text-3xl font-black mt-1 text-white">0</p>
             </div>
         </div>
 
@@ -113,18 +148,28 @@
                 </div>
                 <span id="kpi-tarde-diff" class="text-5xl font-black drop-shadow-md">0</span>
             </div>
-            <div class="text-right bg-black/20 p-3 rounded-lg backdrop-blur-sm">
-                <p class="text-[10px] opacity-70 uppercase font-black tracking-widest">Na Linha</p>
-                <p id="kpi-tarde-total" class="text-3xl font-black mt-1">0</p>
+            <div class="text-right bg-black/20 p-3 rounded-lg backdrop-blur-sm border border-white/5 shadow-inner">
+                <p class="text-[10px] opacity-70 uppercase font-black tracking-widest text-slate-300">Na Linha</p>
+                <p id="kpi-tarde-total" class="text-3xl font-black mt-1 text-white">0</p>
             </div>
         </div>
     </div>
 
     <div class="flex-grow bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl p-6 flex flex-col relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-slate-600"></div>
-        <div class="flex items-center gap-3 mb-6 border-b border-slate-700 pb-4">
-            <i class="fa-solid fa-network-wired text-blue-400 text-xl"></i>
-            <h2 class="text-xl font-black text-white tracking-wide">STATUS POR POSTO DE TRABALHO</h2>
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 border-b border-slate-700 pb-4 gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-network-wired text-blue-400 text-xl"></i>
+                <h2 class="text-xl font-black text-white tracking-wide">VISÃO GERAL DA LINHA - POSTOS DE TRABALHO</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-3 py-1.5 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-microchip mr-1"></i> Balanceamento Integrado
+                </span>
+                <span class="text-xs font-bold text-slate-400 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> Lead Time Ativo
+                </span>
+            </div>
         </div>
         
         <div id="grid-postos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 flex-grow content-start">
@@ -138,6 +183,37 @@
     </footer>
 
     <script>
+        // --- 1. DADOS DE ENGENHARIA (CRONOANÁLISE E BALANCEAMENTO OFICIAL) ---
+        // Baseado nas planilhas de 1 CT/Dia e 1,5 CT/Dia fornecidas
+        const dadosEngenharia = {
+            "1.0": {
+                efetivoNecessario: 34,
+                postos: {
+                    "posto 1": { tempo: 451, limiteDias: 1, operadores: 2, tarefas: [{n: "Posicionar peças no gabarito", t: 46}, {n: "Montar almas", t: 36}, {n: "Montar vigas", t: 168}, {n: "Montar vigas rampa frontal", t: 121}] },
+                    "posto pescoço": { tempo: 451, limiteDias: 1, operadores: 2, tarefas: [{n: "Pontear manual vigas pescoço", t: 120}] },
+                    "posto 2": { tempo: 540, limiteDias: 1, operadores: 2, tarefas: [{n: "Posicionar vigas", t: 41}, {n: "Solda manual", t: 189}, {n: "Solda com tartaruga", t: 250}] },
+                    "posto 3": { tempo: 913, limiteDias: 2, operadores: 3, tarefas: [{n: "Posicionar vigas", t: 13}, {n: "Dar fogo / Alinhar", t: 32}, {n: "Montar perfil lateral", t: 80}, {n: "Montar sup suspensão", t: 118}] },
+                    "posto 4": { tempo: 1051, limiteDias: 2, operadores: 3, tarefas: [{n: "Montar cobertura do rodado", t: 216}, {n: "Soldar cobertura inferior", t: 66}] },
+                    "posto 5": { tempo: 1585, limiteDias: 3, operadores: 4, tarefas: [{n: "Soldar estrutura", t: 273}, {n: "Soldar cobertura rebaixo", t: 145}] },
+                    "posto 6": { tempo: 1460, limiteDias: 3, operadores: 3, tarefas: [{n: "Montar estrutura rampa frontal", t: 304}] },
+                    "posto 7": { tempo: 468, limiteDias: 1, operadores: 2, tarefas: [{n: "Pre acoplamento pescoço", t: 41}, {n: "Montar braços elevação", t: 74}, {n: "Retirar produto", t: 13}] }
+                }
+            },
+            "1.5": {
+                efetivoNecessario: 42, 
+                postos: {
+                    "posto 1": { tempo: 274, limiteDias: 1, operadores: 2, tarefas: [{n: "Posicionar peças no gabarito", t: 46}, {n: "Montar almas", t: 36}] },
+                    "posto pescoço": { tempo: 274, limiteDias: 1, operadores: 2, tarefas: [{n: "Atividades do Pescoço (ajustado)", t: 274}] },
+                    "posto 2": { tempo: 540, limiteDias: 1, operadores: 3, tarefas: [{n: "Posicionar vigas", t: 41}, {n: "Solda manual", t: 189}] },
+                    "posto 3": { tempo: 880, limiteDias: 2, operadores: 4, tarefas: [{n: "Posicionar vigas", t: 13}, {n: "Alinhar vigas / Cavaletes", t: 66}] },
+                    "posto 4": { tempo: 1051, limiteDias: 2, operadores: 4, tarefas: [{n: "Montar cobertura do rodado", t: 216}] },
+                    "posto 5": { tempo: 1585, limiteDias: 3, operadores: 5, tarefas: [{n: "Soldar estrutura", t: 273}] },
+                    "posto 6": { tempo: 1460, limiteDias: 3, operadores: 4, tarefas: [{n: "Montar estrutura rampa", t: 304}] },
+                    "posto 7": { tempo: 468, limiteDias: 1, operadores: 3, tarefas: [{n: "Pre acoplamento", t: 41}, {n: "Retirar produto", t: 13}] }
+                }
+            }
+        };
+
         // Relógio
         setInterval(() => {
             const agora = new Date();
@@ -145,92 +221,8 @@
             document.getElementById('hora-atual').innerText = agora.toLocaleTimeString('pt-BR', { hour12: false });
         }, 1000);
 
-        // Banco de Atividades extraído do Balanceamento CT
-        const getAtividadesPosto = (nomePosto) => {
-            const padraoNome = nomePosto.toLowerCase().trim();
-            
-            if (padraoNome.includes('posto 1') || padraoNome.includes('posto 01') || padraoNome.includes('box 1')) {
-                return [
-                    "Posicionar peças no gabarito",
-                    "Pontear almas",
-                    "Montar vigas",
-                    "Montar vigas rampa frontal",
-                    "Pontear manual vigas rampa frontal",
-                    "Montar vigas pescoço fixo",
-                    "Pontear manual vigas pescoço",
-                    "Avançar com ponte rolante"
-                ];
-            }
-            if (padraoNome.includes('posto 2') || padraoNome.includes('posto 02') || padraoNome.includes('box 2')) {
-                return [
-                    "Posicionar vigas",
-                    "Solda manual",
-                    "Preparar/posicionar tartaruga",
-                    "Solda com tartaruga",
-                    "Avançar com ponte rolante"
-                ];
-            }
-            if (padraoNome.includes('posto 3') || padraoNome.includes('posto 03') || padraoNome.includes('box 3')) {
-                return [
-                    "Posicionar vigas",
-                    "Dar fogo / Alinhar vigas sobre cavaletes",
-                    "Montar travessas passantes e reforços",
-                    "Montar saia traseira e perfil lateral",
-                    "Montar perfil lateral do rodado",
-                    "Montar suporte da suspensão/balanceiro",
-                    "Montar argola e suporte das argolas",
-                    "Montar reforços e cobertura do rebaixo",
-                    "Montar suporte dos alargadores e acessórios",
-                    "Avançar com ponte rolante"
-                ];
-            }
-            if (padraoNome.includes('posto 4') || padraoNome.includes('posto 04') || padraoNome.includes('box 4')) {
-                return [
-                    "Montar e soldar cobertura do rodado",
-                    "Montar suporte do bujão",
-                    "Soldar saia traseira (fechamento)",
-                    "Soldar estrutura interna e externa",
-                    "Soldar suporte das argolas e alargadores",
-                    "Soldar suporte da suspensão/balanceiro",
-                    "Avançar com ponte rolante"
-                ];
-            }
-            if (padraoNome.includes('posto 5') || padraoNome.includes('posto 05') || padraoNome.includes('box 5')) {
-                return [
-                    "Soldar estrutura e cobertura do rebaixo",
-                    "Finalizar solda cobertura do rodado",
-                    "Montar e soldar sup. parra barro",
-                    "Pré montar e soldar no produto C.I.",
-                    "Montar e soldar parachoque",
-                    "Conjunto articulação da rampa traseira",
-                    "Completar solda ganchos frontais Jota",
-                    "Avançar com ponte rolante"
-                ];
-            }
-            if (padraoNome.includes('posto 6') || padraoNome.includes('posto 06') || padraoNome.includes('box 6')) {
-                return [
-                    "Montar vigas e estrutura rampa frontal",
-                    "Soldar estrutura rampa frontal",
-                    "Montar e soldar engate do pescoço",
-                    "Montar e soldar agarradeiras da rampa",
-                    "Inspeção",
-                    "Avançar com ponte rolante"
-                ];
-            }
-            if (padraoNome.includes('posto 7') || padraoNome.includes('posto 07') || padraoNome.includes('box 7')) {
-                return [
-                    "Pré acoplamento e solda do pescoço móvel",
-                    "Montar braços de elevação",
-                    "Teste hidráulico",
-                    "Pré montar e fixar eixos com mola",
-                    "Montar pneus de processo",
-                    "Acoplar rampas traseira e dianteira",
-                    "Retirar produto"
-                ];
-            }
-            
-            return ["Atividades não cadastradas para este posto."];
-        };
+        const dataLocalHoje = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        document.getElementById('filtro-data').value = dataLocalHoje;
 
         // Configuração Firebase
         const firebaseConfig = {
@@ -245,38 +237,160 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Listener de Dados
-        database.ref('linhaCT/dados').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+        let historicoCompleto = {}; 
+        let draftAtual = null;
+        let legacyDados = null;
 
-            const pts = parseInt(data.efetivo.pontoSoft) || 0;
-            const nec = parseInt(data.efetivo.necessario) || 0;
-            const abs = Math.max(0, nec - pts);
+        // Listeners do Banco de Dados
+        database.ref('linhaCT/dados').on('value', (snap) => { legacyDados = snap.val(); verificarERenderizar(); });
+        database.ref('linhaCT/draft').on('value', (snap) => { draftAtual = snap.val(); verificarERenderizar(); });
+        database.ref('linhaCT/registros').on('value', (snap) => { historicoCompleto = snap.val() || {}; verificarERenderizar(); });
 
-            // Atualiza KPI Ponto Soft
-            document.getElementById('kpi-pontosoft').innerText = pts;
-            document.getElementById('kpi-necessario').innerText = `/ ${nec}`;
-            document.getElementById('kpi-absenteismo').innerText = abs;
+        function verificarERenderizar() {
+            if(document.getElementById('filtro-data').value) renderizarPainel();
+        }
+
+        function voltarParaHoje() {
+            document.getElementById('filtro-data').value = dataLocalHoje;
+            document.getElementById('filtro-ov').value = '';
+            renderizarPainel();
+        }
+
+        // Recupera Dados da Engenharia pelo Nome do Posto
+        function getInfoPosto(nomePosto, ritmo) {
+            const padrao = nomePosto.toLowerCase().trim();
+            const config = dadosEngenharia[ritmo].postos;
+            // Busca chave parecida
+            const chaveEncontrada = Object.keys(config).find(k => padrao.includes(k) || padrao.includes(k.replace('posto ', 'box ')));
+            if(chaveEncontrada) return config[chaveEncontrada];
+            return { tempo: 0, limiteDias: 1, operadores: 0, tarefas: [{n: "Sem padrão mapeado", t: 0}] };
+        }
+
+        function mesclarTurnosHistorico(dadosDia) {
+            let view = { efetivo: { necessario: 0, pontoSoft: 0 }, postos: [] };
+            const nomesPostos = ["Posto 1", "Posto Pescoço", "Posto 2", "Posto 3", "Posto 4", "Posto 5", "Posto 6", "Posto 7"];
             
-            // Lógica de Cores - Absenteísmo
-            const cardAbs = document.getElementById('card-absenteismo');
-            if(abs > 0) { 
-                cardAbs.className = "bg-red-900/30 p-6 rounded-2xl border border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:-translate-y-1 transition-all duration-300"; 
-            } else { 
-                cardAbs.className = "bg-emerald-900/20 p-6 rounded-2xl border border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:-translate-y-1 transition-all duration-300"; 
+            const turnoRef = dadosDia.tarde || dadosDia.manha;
+            if (turnoRef && turnoRef.efetivo) view.efetivo = turnoRef.efetivo;
+
+            view.postos = nomesPostos.map((nome, i) => {
+                let m = { pessoas: '', ov: '' };
+                let t = { pessoas: '', ov: '' };
+
+                if (dadosDia.manha && dadosDia.manha.postos && dadosDia.manha.postos[i]) m = dadosDia.manha.postos[i].manha || m;
+                if (dadosDia.tarde && dadosDia.tarde.postos && dadosDia.tarde.postos[i]) t = dadosDia.tarde.postos[i].tarde || t;
+                return { nome: nome, manha: m, tarde: t };
+            });
+
+            return view;
+        }
+
+        function calcularDiasNoPosto(ovBuscada, nomePostoBuscado, dataInicio, dataViewAtual) {
+            if (!ovBuscada || ovBuscada === '---' || ovBuscada === '') return 0;
+            let dias = 0;
+            let dataAtual = new Date(dataInicio + 'T12:00:00'); 
+            
+            for(let i=0; i<30; i++) {
+                const dtStr = dataAtual.toISOString().split('T')[0];
+                let achouNoPosto = false;
+
+                if (i === 0 && dataViewAtual && dataViewAtual.postos) {
+                    const postoEncontrado = dataViewAtual.postos.find(p => p.nome === nomePostoBuscado);
+                    if (postoEncontrado) {
+                        if (postoEncontrado.tarde && postoEncontrado.tarde.ov === ovBuscada) achouNoPosto = true;
+                        else if (postoEncontrado.manha && postoEncontrado.manha.ov === ovBuscada) achouNoPosto = true;
+                    }
+                } else {
+                    const registrosDoDia = historicoCompleto[dtStr];
+                    if (registrosDoDia) {
+                        const postosM = (registrosDoDia.manha && registrosDoDia.manha.postos) ? registrosDoDia.manha.postos : [];
+                        const postosT = (registrosDoDia.tarde && registrosDoDia.tarde.postos) ? registrosDoDia.tarde.postos : [];
+                        
+                        const pT = postosT.find(p => p.nome === nomePostoBuscado);
+                        if(pT && pT.tarde && pT.tarde.ov === ovBuscada) achouNoPosto = true;
+                        
+                        const pM = postosM.find(p => p.nome === nomePostoBuscado);
+                        if(pM && pM.manha && pM.manha.ov === ovBuscada) achouNoPosto = true;
+                    }
+                }
+
+                if (achouNoPosto) {
+                    dias++; dataAtual.setDate(dataAtual.getDate() - 1); 
+                } else break; 
+            }
+            return dias;
+        }
+
+        function aplicarFiltroOV() {
+            const termo = document.getElementById('filtro-ov').value.toUpperCase().trim();
+            const cards = document.querySelectorAll('.posto-card');
+            
+            cards.forEach(card => {
+                const ovM = card.getAttribute('data-ov-m') || '';
+                const ovT = card.getAttribute('data-ov-t') || '';
+                if (termo === '') card.classList.remove('posto-desfocado');
+                else {
+                    if (ovM.includes(termo) || ovT.includes(termo)) card.classList.remove('posto-desfocado');
+                    else card.classList.add('posto-desfocado');
+                }
+            });
+        }
+
+        function renderizarPainel() {
+            const dataSelecionada = document.getElementById('filtro-data').value;
+            const isHoje = dataSelecionada === dataLocalHoje;
+            const ritmoSelecionado = document.getElementById('ritmo-takt').value;
+            
+            let dataView = null;
+            let dadosDoDia = historicoCompleto[dataSelecionada];
+
+            // Prioridade de exibição
+            if (isHoje) {
+                if (draftAtual && draftAtual.postos) {
+                    dataView = draftAtual;
+                    atualizarIndicadorData("AO VIVO", 'text-red-500', 'bg-red-950/40 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]');
+                } else if (legacyDados && legacyDados.postos) {
+                    dataView = legacyDados;
+                    atualizarIndicadorData("AO VIVO", 'text-red-500', 'bg-red-950/40 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]');
+                } else if (dadosDoDia) {
+                    dataView = mesclarTurnosHistorico(dadosDoDia);
+                    atualizarIndicadorData("REGISTRO SALVO HOJE", 'text-blue-400', 'bg-blue-900/30 border-blue-500/50');
+                }
+            } else {
+                if (dadosDoDia) {
+                    dataView = mesclarTurnosHistorico(dadosDoDia);
+                    atualizarIndicadorData("MODO HISTÓRICO", 'text-amber-400', 'bg-amber-900/30 border-amber-500/50');
+                }
             }
 
-            // Somatório Rondas
+            if (!dataView || !dataView.postos) {
+                atualizarIndicadorData("SEM DADOS NESTA DATA", 'text-slate-400', 'bg-slate-800 border-slate-600');
+                limparPainelVisuais();
+                document.getElementById('grid-postos').innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-16 text-slate-500"><i class="fa-solid fa-ghost text-5xl mb-4 opacity-50"></i><p class="text-xl font-bold tracking-widest">NENHUM REGISTRO ENCONTRADO</p><p class="text-sm">Data: ${dataSelecionada.split('-').reverse().join('/')}</p></div>`;
+                return;
+            }
+
+            // Injeta o Necessário da Engenharia no KPI Superior
+            const efetivoEngenharia = dadosEngenharia[ritmoSelecionado].efetivoNecessario;
+            const pts = parseInt(dataView.efetivo.pontoSoft) || 0;
+            const abs = Math.max(0, efetivoEngenharia - pts);
+
+            document.getElementById('kpi-pontosoft').innerText = pts;
+            document.getElementById('kpi-necessario').innerText = `/ ${efetivoEngenharia}`;
+            document.getElementById('kpi-absenteismo').innerText = abs;
+            
+            const cardAbs = document.getElementById('card-absenteismo');
+            if(abs > 0) cardAbs.className = "bg-red-900/30 p-6 rounded-2xl border border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"; 
+            else cardAbs.className = "bg-emerald-900/20 p-6 rounded-2xl border border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"; 
+
             let tm = 0, tt = 0;
-            if (data.postos) {
-                data.postos.forEach(p => { 
+            if (dataView.postos) {
+                dataView.postos.forEach(p => { 
                     if (p && p.manha) tm += parseInt(p.manha.pessoas) || 0; 
                     if (p && p.tarde) tt += parseInt(p.tarde.pessoas) || 0; 
                 });
             }
 
-            // Função para pintar Rondas
             const pintaCardRonda = (idTotal, idDiff, idCard, total) => {
                 const diff = pts - total;
                 document.getElementById(idTotal).innerText = total;
@@ -285,20 +399,16 @@
                 const baseClasses = "p-6 rounded-2xl border shadow-xl flex justify-between items-center hover:-translate-y-1 transition-all duration-300";
                 
                 if (total === 0) { 
-                    elDiff.innerText = "-"; 
-                    elDiff.className = "text-5xl font-black text-slate-500 drop-shadow-md"; 
+                    elDiff.innerText = "-"; elDiff.className = "text-5xl font-black text-slate-500 drop-shadow-md"; 
                     elCard.className = `bg-slate-800 border-slate-700 text-slate-300 ${baseClasses}`; 
                 } else if (diff === 0) { 
-                    elDiff.innerText = "OK"; 
-                    elDiff.className = "text-5xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"; 
+                    elDiff.innerText = "OK"; elDiff.className = "text-5xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"; 
                     elCard.className = `bg-emerald-950/20 border-emerald-500/40 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.1)] ${baseClasses}`; 
                 } else if (diff > 0) { 
-                    elDiff.innerText = diff; 
-                    elDiff.className = "text-5xl font-black text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"; 
+                    elDiff.innerText = diff; elDiff.className = "text-5xl font-black text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"; 
                     elCard.className = `bg-red-950/30 border-red-500/50 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.15)] ${baseClasses}`; 
                 } else { 
-                    elDiff.innerText = `+${Math.abs(diff)}`; 
-                    elDiff.className = "text-5xl font-black text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"; 
+                    elDiff.innerText = `+${Math.abs(diff)}`; elDiff.className = "text-5xl font-black text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"; 
                     elCard.className = `bg-amber-950/20 border-amber-500/40 text-amber-200 shadow-[0_0_15px_rgba(251,191,36,0.1)] ${baseClasses}`; 
                 }
             };
@@ -306,51 +416,75 @@
             pintaCardRonda('kpi-manha-total', 'kpi-manha-diff', 'card-manha', tm);
             pintaCardRonda('kpi-tarde-total', 'kpi-tarde-diff', 'card-tarde', tt);
 
-            // Renderiza Postos
-            if (data.postos) {
-                document.getElementById('grid-postos').innerHTML = data.postos.map((p, index) => {
+            // GERAÇÃO DOS POSTOS COM DADOS DE ENGENHARIA E LEAD TIME CIRÚRGICO
+            if (dataView.postos) {
+                document.getElementById('grid-postos').innerHTML = dataView.postos.map((p, index) => {
                     if (!p) return '';
                     const pManha = (p.manha && p.manha.pessoas) ? p.manha.pessoas : '-';
-                    const ovManha = (p.manha && p.manha.ov) ? p.manha.ov : '---';
+                    const ovManha = (p.manha && p.manha.ov) ? p.manha.ov.toUpperCase() : '---';
                     const pTarde = (p.tarde && p.tarde.pessoas) ? p.tarde.pessoas : '-';
-                    const ovTarde = (p.tarde && p.tarde.ov) ? p.tarde.ov : '---';
+                    const ovTarde = (p.tarde && p.tarde.ov) ? p.tarde.ov.toUpperCase() : '---';
 
-                    // Animação cascata
+                    // Resgata os Padrões da Engenharia
+                    const infoEng = getInfoPosto(p.nome || '', ritmoSelecionado);
+                    const limiteDias = infoEng.limiteDias;
+
+                    const diasNoPosto = calcularDiasNoPosto((ovTarde !== '---' ? ovTarde : ovManha), p.nome, dataSelecionada, dataView);
+                    
+                    // Lógica Dinâmica de Cor do Crachá baseada no limite da engenharia
+                    let badgeTempoHTML = '';
+                    if (diasNoPosto > 0) {
+                        let badgeColor = 'bg-emerald-700/80 text-white border-emerald-500'; // No Prazo Ideal
+                        if (diasNoPosto === limiteDias) badgeColor = 'bg-amber-600/80 text-white border-amber-500'; // Limite! Atenção
+                        if (diasNoPosto > limiteDias) badgeColor = 'bg-red-600 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse'; // Atrasado
+
+                        badgeTempoHTML = `<div class="absolute -top-3 -right-3 ${badgeColor} border text-[10px] font-black px-2 py-1 rounded-lg z-10 flex items-center gap-1" title="Limite Padrão: ${limiteDias} dia(s)">
+                                            <i class="fa-solid fa-stopwatch"></i> ${diasNoPosto} ${diasNoPosto === 1 ? 'dia' : 'dias'}
+                                          </div>`;
+                    }
+
                     const animationDelay = `style="animation-delay: ${index * 50}ms"`;
                     
-                    // Resgata atividades para este posto
-                    const atividadesDoPosto = getAtividadesPosto(p.nome || '');
-                    const htmlAtividades = atividadesDoPosto.map(ativ => `
-                        <li class="pl-2 border-l border-blue-500/50 py-1 hover:bg-slate-800/50 rounded-r transition-colors">
-                            <i class="fa-solid fa-angle-right text-[8px] text-blue-400 mr-1.5 align-middle"></i>
-                            <span class="align-middle">${ativ}</span>
+                    // Monta as Tarefas com os Tempos Exatos
+                    const htmlAtividades = infoEng.tarefas.map(ativ => `
+                        <li class="pl-2 border-l border-blue-500/50 py-1.5 hover:bg-slate-800/80 rounded-r transition-colors flex justify-between items-center">
+                            <span class="align-middle text-slate-300">
+                                <i class="fa-solid fa-angle-right text-[8px] text-blue-400 mr-1.5 align-middle"></i>
+                                ${ativ.n}
+                            </span>
+                            ${ativ.t > 0 ? `<span class="text-[9px] font-mono font-bold bg-slate-950 text-blue-400 px-1.5 py-0.5 rounded border border-slate-700">${ativ.t}m</span>` : ''}
                         </li>
                     `).join('');
 
-                    // Destaque: 'hover:z-50' no card principal garante que, ao passar o mouse, ele sobrepõe TODOS os outros cards
                     return `
-                        <div class="relative bg-slate-900 rounded-xl border border-slate-700 shadow-lg hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col justify-between group/card animate-fade-in opacity-0 hover:z-50" ${animationDelay}>
+                        <div class="posto-card relative bg-slate-900 rounded-xl border border-slate-700 shadow-lg hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-300 flex flex-col justify-between group/card animate-fade-in opacity-0 hover:z-50" data-ov-m="${ovManha}" data-ov-t="${ovTarde}" ${animationDelay}>
                             
+                            ${badgeTempoHTML}
+
                             <div class="bg-slate-800/80 p-3 border-b border-slate-700 relative flex justify-between items-center rounded-t-xl">
                                 <div class="absolute left-0 top-0 h-full w-1 bg-blue-500 group-hover/card:bg-blue-400 transition-colors rounded-tl-xl"></div>
-                                <h3 class="font-bold text-slate-200 truncate pl-2 text-lg w-4/5" title="${p.nome || 'Posto'}">${p.nome || 'Posto'}</h3>
+                                
+                                <div class="flex flex-col pl-2 w-4/5">
+                                    <h3 class="font-bold text-slate-200 truncate text-lg leading-tight" title="${p.nome || 'Posto'}">${p.nome || 'Posto'}</h3>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-blue-400 mt-0.5"><i class="fa-regular fa-clock"></i> Carga: ${infoEng.tempo} min</span>
+                                </div>
                                 
                                 <div class="relative group/tooltip flex items-center justify-center">
-                                    <div class="p-1.5 hover:bg-slate-700 rounded-md cursor-help transition-colors">
+                                    <div class="p-1.5 hover:bg-slate-700 rounded-md cursor-help transition-colors icon-destaque">
                                         <i class="fa-solid fa-clipboard-list text-slate-400 group-hover/tooltip:text-blue-400 text-lg transition-colors"></i>
                                     </div>
-                                    
-                                    <div class="absolute z-[100] right-0 top-full pt-2 hidden group-hover/tooltip:block w-[280px]">
+                                    <div class="absolute z-[100] right-0 top-full pt-2 hidden group-hover/tooltip:block w-[320px]">
                                         <div class="relative bg-slate-900 border border-slate-600 rounded-xl shadow-[0_15px_50px_-12px_rgba(0,0,0,1)] text-xs text-slate-300 p-4">
                                             <div class="absolute -top-[7px] right-[11px] w-3 h-3 bg-slate-900 border-t border-l border-slate-600 rotate-45"></div>
                                             
-                                            <h4 class="font-black text-blue-400 mb-3 border-b border-slate-700 pb-2 uppercase tracking-wider flex items-center gap-2">
-                                                <i class="fa-solid fa-gears"></i> Padrão de Trabalho
-                                            </h4>
-                                            
-                                            <ul class="space-y-1 max-h-56 overflow-y-auto pr-1 tooltip-scroll">
-                                                ${htmlAtividades}
-                                            </ul>
+                                            <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-3">
+                                                <h4 class="font-black text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                                                    <i class="fa-solid fa-gears"></i> Padrão de Trabalho
+                                                </h4>
+                                                <span class="bg-slate-800 text-white font-bold px-2 py-0.5 rounded text-[10px] border border-slate-600"><i class="fa-solid fa-user-gear"></i> ${infoEng.operadores} OPs</span>
+                                            </div>
+
+                                            <ul class="space-y-1 max-h-56 overflow-y-auto pr-1 tooltip-scroll">${htmlAtividades}</ul>
                                         </div>
                                     </div>
                                 </div>
@@ -390,10 +524,31 @@
                         </div>
                     `;
                 }).join('');
+                
+                aplicarFiltroOV();
             }
-        });
+        }
+
+        function atualizarIndicadorData(texto, colorTextClass, containerClasses) {
+            document.getElementById('indicador-texto').innerText = texto;
+            document.getElementById('indicador-texto').className = `${colorTextClass} font-bold tracking-widest text-sm`;
+            let ledColor = 'bg-blue-500';
+            if(texto.includes('AO VIVO')) ledColor = 'bg-red-500 live-indicator';
+            else if(texto.includes('HISTÓRICO')) ledColor = 'bg-amber-500';
+            else if(texto.includes('SEM DADOS')) ledColor = 'bg-slate-500';
+            document.getElementById('indicador-led').className = `w-3.5 h-3.5 ${ledColor} rounded-full`;
+            document.getElementById('indicador-status').className = `flex items-center gap-2 px-5 py-2.5 rounded-full border transition-colors ${containerClasses}`;
+        }
+
+        function limparPainelVisuais() {
+            document.getElementById('kpi-pontosoft').innerText = '0';
+            document.getElementById('kpi-necessario').innerText = '/ 0';
+            document.getElementById('kpi-absenteismo').innerText = '0';
+            document.getElementById('kpi-manha-total').innerText = '0';
+            document.getElementById('kpi-tarde-total').innerText = '0';
+            document.getElementById('kpi-manha-diff').innerText = '-';
+            document.getElementById('kpi-tarde-diff').innerText = '-';
+        }
     </script>
 </body>
 </html>
-
-```
