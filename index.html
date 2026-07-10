@@ -36,7 +36,7 @@
                 <button onclick="registrarRonda('tarde')" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-bold shadow transition-all">Salvar Ronda Tarde</button>
                 
                 <div class="flex items-center gap-2 text-sm text-slate-600 ml-2">
-                    <input type="checkbox" id="check-limpar-auto" class="w-4 h-4 text-blue-600" checked>
+                    <input type="checkbox" id="check-limpar-auto" class="w-4 h-4 text-blue-600">
                     <label for="check-limpar-auto" class="font-medium cursor-pointer">Limpar após salvar</label>
                 </div>
             </div>
@@ -215,20 +215,27 @@
         // Recupera DRAFT ao invés da linha principal para não sobrepor tudo de uma vez
         database.ref('linhaCT/draft').once('value').then((snapshot) => {
             const data = snapshot.val();
+            
+            // Verifica se o rascunho é da data de hoje
             if (data && data.efetivo) {
-                document.getElementById('input-data').value = data.efetivo.data || dataHoje;
-                document.getElementById('input-necessario').value = data.efetivo.necessario || 34;
-                document.getElementById('input-pontosoft').value = data.efetivo.pontoSoft || 30;
-                document.getElementById('input-observacoes').value = data.efetivo.observacoes || "";
-            }
-            if (data && data.postos) {
-                for(let i=0; i<8; i++) {
-                    if(data.postos[i]) {
-                        document.getElementById(`p${i}-m-p`).value = (data.postos[i].manha) ? data.postos[i].manha.pessoas : "";
-                        document.getElementById(`p${i}-m-o`).value = (data.postos[i].manha) ? data.postos[i].manha.ov : "";
-                        document.getElementById(`p${i}-t-p`).value = (data.postos[i].tarde) ? data.postos[i].tarde.pessoas : "";
-                        document.getElementById(`p${i}-t-o`).value = (data.postos[i].tarde) ? data.postos[i].tarde.ov : "";
+                if (data.efetivo.data === dataHoje) {
+                    document.getElementById('input-necessario').value = data.efetivo.necessario || 34;
+                    document.getElementById('input-pontosoft').value = data.efetivo.pontoSoft || 30;
+                    document.getElementById('input-observacoes').value = data.efetivo.observacoes || "";
+                    
+                    if (data.postos) {
+                        for(let i=0; i<8; i++) {
+                            if(data.postos[i]) {
+                                document.getElementById(`p${i}-m-p`).value = (data.postos[i].manha) ? data.postos[i].manha.pessoas : "";
+                                document.getElementById(`p${i}-m-o`).value = (data.postos[i].manha) ? data.postos[i].manha.ov : "";
+                                document.getElementById(`p${i}-t-p`).value = (data.postos[i].tarde) ? data.postos[i].tarde.pessoas : "";
+                                document.getElementById(`p${i}-t-o`).value = (data.postos[i].tarde) ? data.postos[i].tarde.ov : "";
+                            }
+                        }
                     }
+                } else {
+                    // Se o draft for de um dia anterior, ignora os dados velhos e salva um rascunho limpo com a data de hoje
+                    salvarDados();
                 }
             }
             calcularTudo();
@@ -309,7 +316,6 @@
             }
         }
 
-        // A SUA função original de calcularTudo, intacta com as cores (estilizar)
         function calcularTudo() {
             const nec = parseInt(document.getElementById('input-necessario').value) || 0;
             const pts = parseInt(document.getElementById('input-pontosoft').value) || 0;
@@ -337,7 +343,6 @@
             estilizar('rodape-tarde', tt);
         }
 
-        // A SUA função original de Exportar
         function exportarExcel() {
             const dt = document.getElementById('input-data').value;
             const nec = document.getElementById('input-necessario').value;
